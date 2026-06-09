@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/BannerFinchain.png" alt="FinChain Banner">
+</p>
+
 # 🔐 FinChain Secure Ledger
 
 <p align="center">
