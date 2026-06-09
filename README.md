@@ -148,9 +148,9 @@ g++ *.cpp -o finchain
 
 ## 👥 Contributors
 
-| Name | Role |
-|------|------|
-| Your Name | Developer |
+| Name                      | Role      |
+|---------------------------|-----------|
+| NI PUTU AYU DIAN SULASTRI | Developer |
 
 ---
 
