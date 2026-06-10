@@ -101,7 +101,7 @@ Start
       ├── Wallet Management
       ├── Transactions
       ├── Financial Overview
-      └── Exit
+      └── Exit 
 ```
 
 ---
