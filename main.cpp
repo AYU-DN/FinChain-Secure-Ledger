@@ -1,6 +1,8 @@
 #include <iostream>
 #include "otentikasi.cpp"
 #include "otentikasi.h"
+#include "dashboard.cpp"
+#include "dashboard.h"
  
 int main()
 {
@@ -73,6 +75,7 @@ int main()
                         std::cout << "Selamat Datang!\n";
                         gagalLogin = 0;
                         pauseProgram();
+                        PersonalDashboard();
                     }
                     else
                     {
