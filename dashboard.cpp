@@ -48,6 +48,7 @@ void PersonalDashboard(){
                 std::cout << "  Total Income   : "; 
                 std::cout << "  Total Expense  : "; 
                 std::cout << "  Net Balance    : ";
+                pauseProgram();
                 break;
             case 'B':
                 bannerDashboard();

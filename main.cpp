@@ -76,6 +76,7 @@ int main()
                         gagalLogin = 0;
                         pauseProgram();
                         PersonalDashboard();
+                        pauseProgram();
                     }
                     else
                     {
