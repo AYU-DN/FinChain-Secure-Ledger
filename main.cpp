@@ -31,7 +31,7 @@ int main()
         std::cout << "  |               ==========================               |\n";
         std::cout << "  |                                                        |\n";
         std::cout << "  ==========================================================\n";
-        std::cout << "  Pilih : ";
+        std::cout << "  Masukan Pilih Anda : ";
         std::cin >> inputMenu;
         if (inputMenu[1] != '\0')
         {
@@ -88,8 +88,11 @@ int main()
                         if (gagalLogin >= 3)
                         {
                             clearScreen();
-                            std::cout << "\nAnda gagal login 3 kali.\n";
-                            std::cout << "AKSES DIBLOKIR. PROGRAM KELUAR.\n";
+                            std::cout << RED << BOLD;
+                            std::cout << "\n╔══════════════════════════════════════════════════╗\n";
+                            std::cout << "  ║  ✗ AKUN DIBLOKIR! Terlalu banyak percobaan.     ║\n";
+                            std::cout << "  ║  Program akan dihentikan.                        ║\n";
+                            std::cout << "  ╚══════════════════════════════════════════════════╝\n" << RESET; 
                             std::cout << "\nProgram selesai.\n";
                             pauseProgram();
                             return 0;
