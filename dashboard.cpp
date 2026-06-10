@@ -27,6 +27,7 @@ struct walletSummary {
 void PersonalDashboard(){
     char pilihan;
 
+    do{
     bannerDashboard();
     std::cout << "*** Makes Your Finances Stable through the Financial Management System ***\n";
     garis();
@@ -36,7 +37,7 @@ void PersonalDashboard(){
     std::cout << "D. Goal Overview\n";
     std::cout << "E. Recent Activity\n";
     std::cout << "F. Progress Bar\n";
-    do{
+    std::cout << " Masukan Pilih Anda (A-F) : ";
     std::cin >> pilihan;
         switch (pilihan){
             case 'A':
