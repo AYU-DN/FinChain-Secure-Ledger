@@ -48,7 +48,7 @@ static std::string generateTXID() {
     return id;
 }
 
-static std::string generateHash(const std::string& data) {
+static std::string BentukHash(const std::string& data) {
     unsigned long h = 5381;
     for (unsigned char c : data) h = ((h << 5) + h) + c;
     std::stringstream ss;
@@ -80,7 +80,7 @@ static void printHeader(const std::string& title) {
     std::cout << "  ╚══════════════════════════════════════════════════╝" << RESET << "\n";
 }
 
-static void printDivider() {
+static void printbatas() {
     std::cout << CYAN << "  ──────────────────────────────────────────────────" << RESET << "\n";
 }
 
@@ -129,10 +129,10 @@ void tambahTransaksi(const std::string& type) {
 
     std::string desc;
     double amount;
-    int catChoice;
+    int pilih_kategori;
 
     std::cout << "\n  Deskripsi        : ";
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
+    std::cin.ignore(1000, '\n'); 
     std::getline(std::cin, desc);
     
     std::cout << "  Jumlah (Rp)      : "; 
@@ -148,12 +148,12 @@ void tambahTransaksi(const std::string& type) {
     std::cout << "  [2] Wants (Keinginan)\n";
     std::cout << "  [3] Savings (Tabungan)\n";
     std::cout << "  Pilihan: "; 
-    std::cin >> catChoice;
+    std::cin >> pilih_kategori;
 
     std::string category;
-    if      (catChoice == 1) category = "Needs";
-    else if (catChoice == 2) category = "Wants";
-    else if (catChoice == 3) category = "Savings";
+    if      (pilih_kategori == 1) category = "Needs";
+    else if (pilih_kategori == 2) category = "Wants";
+    else if (pilih_kategori == 3) category = "Savings";
     else { 
         std::cout << RED << "  Kategori tidak valid.\n" << RESET; 
         pauseScreen(); 
@@ -179,7 +179,7 @@ void tambahTransaksi(const std::string& type) {
     std::string prevHash = transactions.empty() ? "0000000000000000" : transactions.back().currentHash;
     t.prevHash    = prevHash;
     std::string hashData = t.txid + t.type + std::to_string(amount) + t.datetime + prevHash;
-    t.currentHash = generateHash(hashData);
+    t.currentHash = BentukHash(hashData);
 
     if (type == "Income") {
         w.balance    += amount;
@@ -220,7 +220,7 @@ void riwayatTransaksi() {
               << std::setw(16) << "Jumlah"
               << std::setw(20) << "Deskripsi"
               << "Waktu" << RESET << "\n";
-    printDivider();
+    printbatas();
     
     for (auto& t : transactions) {
         std::string col = (t.type == "Income") ? GREEN : RED;
@@ -248,7 +248,7 @@ void cariTransaksi() {
         if (t.txid.find(keyword) != std::string::npos || t.description.find(keyword) != std::string::npos) {
             if (!found) {
                 std::cout << "\n  " << BOLD << "Hasil Pencarian:" << RESET << "\n";
-                printDivider();
+                printbatas();
                 found = true;
             }
             std::string col = (t.type == "Income") ? GREEN : RED;
@@ -259,7 +259,7 @@ void cariTransaksi() {
             std::cout << "  Deskripsi: " << t.description << "\n";
             std::cout << "  Waktu    : " << t.datetime << "\n";
             std::cout << "  Hash     : " << t.currentHash << "\n";
-            printDivider();
+            printbatas();
         }
     }
     if (!found) {
@@ -324,7 +324,7 @@ void menuTransactionManagement() {
         std::cout << "  " << YELLOW << "[4]" << RESET << " Cari Transaksi\n";
         std::cout << "  " << MAGENTA<< "[5]" << RESET << " Hapus Transaksi\n";
         std::cout << "  [0] Kembali\n";
-        printDivider();
+        printbatas();
         std::cout << "  Pilihan: "; 
         std::cin >> choice;
 
