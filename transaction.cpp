@@ -86,7 +86,7 @@ static void printbatas() {
 
 static void pauseScreen() {
     std::cout << "\n" << CYAN << "  Tekan Enter untuk melanjutkan..." << RESET;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cin.ignore(1000, '\n');
     std::cin.get();
 }
 
