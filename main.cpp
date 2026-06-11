@@ -36,7 +36,7 @@ int main()
         if (inputMenu[1] != '\0')
         {
             cleanBuffer();
-            std::cout << "\nPilihan tidak valid! Masukkan hanya satu angka tanpa simbol tambahan.\n";
+            std::cout << "\nPilihan tidak valid! Silahkan Masukkan hanya satu angka tanpa simbol tambahan.\n";
             pauseProgram();
             continue;
         }
