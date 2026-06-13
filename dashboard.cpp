@@ -1,4 +1,8 @@
 #include "dashboard.h"
+#include "goaltracker.h"
+#include "goaltracker.cpp"
+#include "wallet.h"
+#include "wallet.cpp"
 #include <iostream>
 #include <iomanip>
 
@@ -53,6 +57,7 @@ void PersonalDashboard(){
             case 'B':
                 bannerDashboard();
                 std::cout << "|    Wallet Summary    |\n";
+                menuWallet();
                 break;
             case 'C':
                 bannerDashboard();
@@ -61,6 +66,7 @@ void PersonalDashboard(){
             case 'D':
                 bannerDashboard();
                 std::cout << "|    Goal Overview    |\n";
+                menuGoalTracker();
                 break;
             case 'E':
                 bannerDashboard();
