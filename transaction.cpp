@@ -116,31 +116,39 @@ void tambahTransaksi(const std::string& type) {
         std::cout << "  [" << (i+1) << "] " << wallets[i].name << " (" << wallets[i].type << ") - " << formatRupiah(wallets[i].balance) << "\n";
     }
     std::cout << "  Pilih wallet: ";
-    int wIdx; 
-    std::cin >> wIdx; 
-    wIdx--;
+    int indekswallet; 
+    std::cin >> indekswallet; 
+    if (std::cin.fail()) {
+        std::cin.clear();
+        std::cin.ignore(1000, '\n');
+        std::cout <<RED <<"  Input harus angka.\n" <<RESET;
+        pauseScreen();
+        return;
+    }
+    indekswallet--;
 
-    if (wIdx < 0 || wIdx >= (int)wallets.size()) {
+    if (indekswallet < 0 || indekswallet >= (int)wallets.size()) {
         std::cout << RED << "  Wallet tidak valid.\n" << RESET; 
         pauseScreen(); 
         return;
     }
-    Wallet& w = wallets[wIdx];
+    Wallet& w = wallets[indekswallet];
 
     std::string desc;
     double amount;
     int pilih_kategori;
-
     std::cout << "\n  Deskripsi        : ";
     std::cin.ignore(1000, '\n'); 
     std::getline(std::cin, desc);
     
     std::cout << "  Jumlah (Rp)      : "; 
     std::cin >> amount;
-    if (amount <= 0) { 
-        std::cout << RED << "  Jumlah tidak valid.\n" << RESET; 
-        pauseScreen(); 
-        return; 
+    if(std::cin.fail() || amount<=0) {
+        std::cin.clear();
+        std::cin.ignore(1000,'\n');
+        std::cout <<RED <<"  Jumlah tidak valid.\n" <<RESET; 
+        pauseScreen();
+        return;
     }
 
     std::cout << "\n  Kategori Budget  :\n";
@@ -193,7 +201,6 @@ void tambahTransaksi(const std::string& type) {
         else if (category == "Wants")    wantsSpent   += amount;
         else if (category == "Savings")  savingsSpent += amount;
     }
-
     transactions.push_back(t);
     
     addAuditLog("Tambah Transaksi", t.txid + " | " + type + " | " + formatRupiah(amount) + " | " + desc);
@@ -229,10 +236,9 @@ void riwayatTransaksi() {
                   << col << std::setw(10) << t.type << RESET
                   << std::setw(10) << t.category
                   << std::setw(16) << formatRupiah(t.amount)
-                  << std::setw(20) << t.description.substr(0, 18)
+                  << std::setw(20) << (t.description.size()>18 ? t.description.substr(0,18) +"..." : t.description)
                   << t.datetime.substr(0, 16) << "\n";
     }
-    pauseScreen();
 }
 
 void cariTransaksi() {
@@ -280,7 +286,7 @@ void hapusTransaksi() {
     riwayatTransaksi();
     std::string txid;
     std::cout << "\n  Masukkan TXID yang akan dihapus: ";
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
+    std::cin.ignore(1000, '\n'); 
     std::getline(std::cin, txid);
 
     for (int i = 0; i < (int)transactions.size(); i++) {
@@ -327,7 +333,13 @@ void menuTransactionManagement() {
         printbatas();
         std::cout << "  Pilihan: "; 
         std::cin >> choice;
-
+        if(!(std::cin>>choice)) {
+            std::cin.clear();
+            std::cin.ignore(1000, '\n');
+            std::cout <<RED <<"\n  Input harus angka\n" <<RESET; 
+            pauseScreen();
+            continue;
+        }
         switch (choice) {
             case 1: tambahTransaksi("Income");  break;
             case 2: tambahTransaksi("Expense"); break;
