@@ -2,92 +2,127 @@
   <img src="assets/BannerFinchain.png" alt="FinChain Banner">
 </p>
 
-# 🔐 FinChain Secure Ledger
+<h1 align="center">🔐 FinChain Secure Ledger</h1>
+
+<p align="center">
+A terminal-based personal financial management system developed using C++.
+</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/C%2B%2B-17-blue" />
-  <img src="https://img.shields.io/badge/Status-Active-success" />
-  <img src="https://img.shields.io/badge/Type-Finance%20Tracker-orange" />
+  <img src="https://img.shields.io/badge/Status-Completed-success" />
+  <img src="https://img.shields.io/badge/Platform-Console-orange" />
   <img src="https://img.shields.io/badge/License-Educational-lightgrey" />
 </p>
 
-<p align="center">
-  A console-based finance tracking system built with C++.
-</p>
+---
+
+# 📑 Table of Contents
+
+* [📖 Overview](#-overview)
+* [✨ Features](#-features)
+* [🧠 Programming Concepts](#-programming-concepts)
+* [⚙️ System Flow](#️-system-flow)
+* [📂 Project Structure](#-project-structure)
+* [🚀 Installation](#-installation)
+* [🖥️ Usage](#️-usage)
+* [🔮 Future Improvements](#-future-improvements)
+* [👥 Contributors](#-contributors)
+* [📄 License](#-license)
 
 ---
 
-## 📑 Table of Contents
+# 📖 Overview
 
-- [📖 Overview](#-overview)
-- [✨ Features](#-features)
-- [📂 Project Structure](#-project-structure)
-- [⚙️ How It Works](#️-how-it-works)
-- [🚀 Installation](#-installation)
-- [🖥️ Usage](#️-usage)
-- [🔮 Future Improvements](#-future-improvements)
-- [👥 Contributors](#-contributors)
+FinChain Secure Ledger is a terminal-based personal financial management application developed using C++.
 
----
+The name **FinChain** combines **Finance** and **Chain**, representing a structured and traceable approach to managing financial activities inspired by secure ledger concepts. The application helps users organize personal financial data while maintaining clear records of transactions and financial decisions.
 
-## 📖 Overview
+This system provides an interactive command-line interface that allows users to:
 
-FinChain Secure Ledger is a C++ financial management application that allows users to securely manage wallets, record transactions, and monitor financial activity through an interactive command-line interface.
+* Register and authenticate accounts
+* Manage multiple wallets
+* Record income and expense transactions
+* Monitor financial conditions and spending behavior
+* Apply budgeting strategies using the **50/30/20 budgeting rule**
+* Create and track financial goals
+* Store user activity through an audit log system
 
-The project was developed to practice software engineering fundamentals, data management, modular programming, and authentication systems.
-
----
-
-## ✨ Features
-
-### 🔑 Authentication System
-- User registration
-- User login
-- Credential validation
-
-### 💳 Wallet Management
-- Create wallet
-- View wallet information
-- Track balances
-
-### 💸 Transaction System
-- Deposit funds
-- Withdraw funds
-- Transaction history
-- Transaction validation
-
-### 📊 Financial Overview
-- Account summary
-- Balance monitoring
-- Activity tracking
-
-### ⚠️ Error Handling
-- Invalid input protection
-- Safe menu navigation
-- Data validation
+This project was developed for educational purposes to implement software engineering fundamentals and demonstrate programming concepts such as functions, arrays, structures, pointers, control statements, looping, data management, and user authentication in C++.
 
 ---
 
-## 📂 Project Structure
+# ✨ Features
 
-```text
-FinChain/
-│
-├── main.cpp
-├── authentication.cpp
-├── authentication.h
-├── wallet.cpp
-├── wallet.h
-├── transaction.cpp
-├── transaction.h
-├── dashboard.cpp
-├── dashboard.h
-└── README.md
-```
+## 🔑 Authentication System
+
+* Sign Up
+* Sign In
+* Credential validation
+* Login limitation
+* Session management
+
+## 💳 Wallet Management
+
+* Create wallet
+* Edit wallet
+* Delete wallet
+* View wallet details
+* Balance tracking
+
+## 💸 Transaction Management
+
+* Income records
+* Expense records
+* Transaction validation
+* Transaction history
+
+## 📊 Personal Dashboard
+
+* Financial summary
+* Balance overview
+* Financial health indicator
+
+## 📈 Budget Manager
+
+* Budget planning
+* 50/30/20 budgeting rule
+* Expense monitoring
+
+## 🎯 Goal Tracker
+
+* Financial target creation
+* Progress tracking
+
+## 📝 Audit Log
+
+* Activity recording
+* User history tracking
+
+## ⚠️ Error Handling
+
+* Invalid input protection
+* Safe navigation
+* Data validation
 
 ---
 
-## ⚙️ How It Works
+# 🧠 Programming Concepts
+
+| Feature                | Basic Programming | Looping | Statement Control | Array / Vector | Function | Struct | Pointer |
+| ---------------------- | ----------------- | ------- | ----------------- | -------------- | -------- | ------ | ------- |
+| Authentication System  | ✓                 | ✓       | ✓                 | ✓              | ✓        | ✓      | ✓       |
+| Dashboard              | ✓                 | ✓       | ✓                 | ✓              | ✓        | ✓      | -       |
+| Wallet Management      | ✓                 | ✓       | ✓                 | ✓              | ✓        | ✓      | ✓       |
+| Transaction Management | ✓                 | ✓       | ✓                 | ✓              | ✓        | ✓      | ✓       |
+| Budget Manager         | ✓                 | ✓       | ✓                 | ✓              | ✓        | ✓      | -       |
+| Goal Tracker           | ✓                 | ✓       | ✓                 | ✓              | ✓        | ✓      | -       |
+| Audit Log              | ✓                 | ✓       | ✓                 | ✓              | ✓        | ✓      | -       |
+| Main System            | ✓                 | ✓       | ✓                 | -              | ✓        | -      | -       |
+
+---
+
+# ⚙️ System Flow
 
 ```text
 Start
@@ -96,32 +131,77 @@ Start
  │
  ├── Sign In
  │
- └── Dashboard
+ └── Financial Management System
       │
+      ├── Personal Dashboard
       ├── Wallet Management
-      ├── Transactions
-      ├── Financial Overview
-      └── Exit 
+      ├── Transaction Management
+      ├── Budget Manager
+      ├── Goal Tracker
+      ├── Audit Log
+      └── Exit
 ```
 
 ---
 
-## 🚀 Installation
+# 📂 Project Structure
 
-### Clone Repository
+```text
+FinChain/
+│
+├── main.cpp
+├── assets/
+│   └── BannerFinchain.png
+└── README.md
+```
+
+Single-file architecture with internal section markers:
+
+```text
+[A] ANSI Constants & Styles
+[B] Utility Functions
+[C] Data Structures
+[D] Global State
+[E] Calculation Helpers
+[F] UI Helpers
+[G] Audit Log
+[H] Personal Dashboard
+[I] Wallet Management
+[J] Transaction Management
+[K] Budget Manager
+[L] Goal Tracker
+[M] Audit Log Menu
+[N] Financial Management System
+[O] Authentication System
+[P] Main Program
+```
+
+---
+
+# 🚀 Installation
+
+## Clone Repository
 
 ```bash
 git clone https://github.com/yourusername/finchain.git
 cd finchain
 ```
 
-### Compile
+## Compile
 
 ```bash
-g++ *.cpp -o finchain
+g++ main.cpp -o finchain
 ```
 
-### Run
+## Run
+
+Windows:
+
+```bash
+finchain.exe
+```
+
+Linux / Mac:
 
 ```bash
 ./finchain
@@ -129,35 +209,42 @@ g++ *.cpp -o finchain
 
 ---
 
-## 🖥️ Usage
+# 🖥️ Usage
 
-1. Launch the application.
-2. Create an account using Sign Up.
-3. Sign In using your credentials.
-4. Manage wallets and transactions.
-5. Monitor your financial activity through the dashboard.
-
----
-
-## 🔮 Future Improvements
-
-- File/database storage
-- Budget planning
-- Financial analytics
-- Report generation
-- Enhanced security
-- Multi-user support
+1. Launch the application
+2. Create an account
+3. Login into the system
+4. Manage wallets and transactions
+5. Track financial activities
+6. Monitor financial goals
 
 ---
 
-## 👥 Contributors
+# 🔮 Future Improvements
 
-| Name                      | Role      |
-|---------------------------|-----------|
-| NI PUTU AYU DIAN SULASTRI | Developer |
+* File/database storage
+* Financial analytics
+* Export report
+* Multi-user support
+* Enhanced security
+* Data visualization
 
 ---
 
-## 📄 License
+# 👥 Contributors
 
-This project was developed for educational purposes.
+| Name                      | Role                    |
+| ------------------------- | ----------------------- |
+| NI PUTU AYU DIAN SULASTRI | Team Leader & Developer |
+| MUHAMMAD SAHRIR           | Developer               |
+| RARA ZASQIA AHLA          | Developer               |
+| ARNI KUMARA DEWI          | Developer               |
+| I NENGAH AGUNG SANJAYA    | Developer               |
+| LAILATUSSADIYAH           | Developer               |
+| SIGIT DEZAN ZULPI         | Developer               |
+
+---
+
+# 📄 License
+
+This project was developed for educational purposes only.
