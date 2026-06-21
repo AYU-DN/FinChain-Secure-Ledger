@@ -122,12 +122,6 @@ void bersihLayar() {
 
 void jedaLayar() {
     cout << "\n" << CYAN << "  " << IKON_PANAH << " Tekan Enter untuk melanjutkan..." << RESET;
-    cin.ignore(1000, '\n');
-    cin.get();
-}
-
-void jedaLayarTanpaFlush() {
-    cout << "\n" << CYAN << "  " << IKON_PANAH << " Tekan Enter untuk melanjutkan..." << RESET;
     cin.get();
 }
 
@@ -155,9 +149,9 @@ string hasilkanIDTransaksi() {
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     string txid = "TX-";
     srand((unsigned int)time(0) + rand() + (unsigned int)(size_t)(&txid));
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 8; i++) {
         txid += karakterValid[rand() % karakterValid.size()];
-        if (i == 3 || i == 7 || i == 11) txid += "-";
+        if (i == 3) txid += "-";
     }
     return txid;
 }
@@ -290,11 +284,18 @@ int bacaInteger(const string& prompt) {
     int nilai;
     while (true) {
         cout << prompt;
-        if (cin >> nilai) {return nilai;} else {
-            cin.clear(); 
-            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Buang input salah
-            cout << MERAH << "  Input tidak valid, masukkan angka.\n" << RESET;
+        string baris;
+        getline(cin, baris);
+        if (baris.empty()) {
+            cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+            jedaLayar();
+            return -999;
         }
+        istringstream ss(baris);
+        if (ss >> nilai) return nilai;
+        cout << MERAH << "  Input tidak valid, masukkan angka.\n" << RESET;
+        jedaLayar();
+        return -999;
     }
 }
 
@@ -303,10 +304,18 @@ double bacaDouble(const string& prompt) {
     double nilai;
     while (true) {
         cout << prompt;
-        if (cin >> nilai) {return nilai;}
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cout << MERAH << "  Input tidak valid, masukkan angka.\n" << RESET;
+        string baris;
+        getline(cin, baris);
+        if (baris.empty()) {
+            cout << MERAH << "  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+            jedaLayar();
+            return -999;
+        }
+        istringstream ss(baris);
+        if (ss >> nilai) return nilai;
+        cout << MERAH << "  Input tidak valid, masukkan angka.\n" << RESET;
+        jedaLayar();
+        return -999;
     }
 }
 
@@ -622,7 +631,7 @@ void tampilkanPersonalDashboard() {
         << RESET;
 
     cout << string(
-        max(0, 42 - lebarTampilUTF8(formatRupiah(totalPengeluaran))),
+        max(0, 41 - lebarTampilUTF8(formatRupiah(totalPengeluaran))),
         ' '
     );
 
@@ -863,7 +872,7 @@ void tampilkanDaftarDompet(bool jedaSetelah = true) {
     int nomor = 1;
     for (const auto& dompet : daftarDompet) {
         string warnaJenis;
-        if (dompet.jenisDompet == "Cash")       warnaJenis = HIJAU_TERANG;
+        if (dompet.jenisDompet == "Cash")           warnaJenis = HIJAU_TERANG;
         else if (dompet.jenisDompet == "E-Wallet")  warnaJenis = KUNING_TERANG;
         else                                         warnaJenis = CYAN_TERANG;
 
@@ -886,183 +895,224 @@ void tampilkanDaftarDompet(bool jedaSetelah = true) {
 }
 
 void tambahDompet() {
-    bersihLayar();
-    cetakStatusBar(namaAkunAktif);
-    cetakHeader("  WALLET MANAGEMENT  ·  Tambah Dompet Baru  ");
-    cetakSpasi();
+    while (true) {
+        bersihLayar();
+        cetakStatusBar(namaAkunAktif);
+        cetakHeader("  WALLET MANAGEMENT  ·  Tambah Dompet Baru  ");
+        cetakSpasi();
 
-    string namaDompetBaru, penyediaDompetBaru;
-    int pilihanJenis;
+        string namaDompetBaru, penyediaDompetBaru;
+        int pilihanJenis;
 
-    cout << "  " << KUNING << TEBAL << "Nama Dompet   : " << RESET;
-    cin.ignore();
-    getline(cin, namaDompetBaru);
-    if (namaDompetBaru.empty()) {
-        cout << MERAH << "\n  Nama dompet tidak boleh kosong!\n" << RESET;
-        jedaLayar(); return;
+        cout << "  " << KUNING << TEBAL << "Nama Dompet   : " << RESET;
+        getline(cin, namaDompetBaru);
+        if (namaDompetBaru.empty()) {
+            cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+            jedaLayar();
+            return;
+        }
+
+        cetakSpasi();
+        cout << "  " << KUNING << TEBAL << "Jenis Dompet  :" << RESET << "\n";
+        cetakItemMenu("1", "Cash (Uang Tunai)",                        HIJAU,  IKON_KOTAK);
+        cetakItemMenu("2", "E-Wallet (GoPay, DANA, OVO, dll.)",        KUNING, IKON_KOTAK);
+        cetakItemMenu("3", "M-Banking (BCA, BRI, BNI, Mandiri, dll.)", CYAN,   IKON_KOTAK);
+        pilihanJenis = bacaInteger("\n  Pilihan: ");
+        if (pilihanJenis == -999) return;
+
+        string jenisDompetBaru;
+        if (pilihanJenis == 1) {
+            jenisDompetBaru    = "Cash";
+            penyediaDompetBaru = "Cash";
+        } else if (pilihanJenis == 2) {
+            jenisDompetBaru = "E-Wallet";
+            cout << "  " << KUNING << "Nama Penyedia (GoPay/DANA/OVO/dll.): " << RESET;
+            getline(cin, penyediaDompetBaru);
+            if (penyediaDompetBaru.empty()) {
+                cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+                jedaLayar();
+                return;
+            }
+        } else if (pilihanJenis == 3) {
+            jenisDompetBaru = "M-Banking";
+            cout << "  " << KUNING << "Nama Penyedia (BCA/BRI/BNI/Mandiri/dll.): " << RESET;
+            getline(cin, penyediaDompetBaru);
+            if (penyediaDompetBaru.empty()) {
+                cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+                jedaLayar();
+                return;
+            }
+        } else {
+            cout << MERAH << "\n  Pilihan tidak valid.\n" << RESET;
+            jedaLayar();
+            continue;
+        }
+
+        double saldoAwalDompet = bacaDouble("  Saldo Awal (Rp): ");
+        if (saldoAwalDompet == -999) return;
+        if (saldoAwalDompet < 0) {
+            cout << MERAH << "\n  Saldo tidak boleh negatif.\n" << RESET;
+            jedaLayar();
+            continue;
+        }
+
+        Dompet dompetBaru;
+        dompetBaru.identifikasiDompet = "W" + to_string(penghitungDompet++);
+        dompetBaru.namaDompet         = namaDompetBaru;
+        dompetBaru.jenisDompet        = jenisDompetBaru;
+        dompetBaru.penyediaDompet     = penyediaDompetBaru;
+        dompetBaru.saldoDompet        = saldoAwalDompet;
+        dompetBaru.waktuDibuat        = dapatkanWaktuSekarang();
+
+        if (saldoAwalDompet > 0) totalPendapatan += saldoAwalDompet;
+        daftarDompet.push_back(dompetBaru);
+
+        tambahEntriLogAudit("Tambah Dompet",
+            "Dompet '" + namaDompetBaru + "' (" + jenisDompetBaru + "/" + penyediaDompetBaru + ")"
+            + " saldo awal " + formatRupiah(saldoAwalDompet));
+
+        cetakLoading("\n  Menyimpan data dompet");
+        cout << "\n  " << HIJAU_TERANG << TEBAL << IKON_CEK << " Dompet berhasil ditambahkan!" << RESET << "\n";
+        cout << "  ID Dompet : " << KUNING << dompetBaru.identifikasiDompet << RESET << "\n";
+        jedaLayar();
+        return;
     }
-
-    cetakSpasi();
-    cout << "  " << KUNING << TEBAL << "Jenis Dompet  :" << RESET << "\n";
-    cetakItemMenu("1", "Cash (Uang Tunai)",         HIJAU,        IKON_KOTAK);
-    cetakItemMenu("2", "E-Wallet (GoPay, DANA, OVO, dll.)", KUNING,  IKON_KOTAK);
-    cetakItemMenu("3", "M-Banking (BCA, BRI, BNI, Mandiri, dll.)", CYAN,  IKON_KOTAK);
-    pilihanJenis = bacaInteger("\n  Pilihan: ");
-
-    string jenisDompetBaru;
-    if (pilihanJenis == 1) {
-        jenisDompetBaru    = "Cash";
-        penyediaDompetBaru = "Cash";
-    } else if (pilihanJenis == 2) {
-        jenisDompetBaru = "E-Wallet";
-        cout << "  " << KUNING << "Nama Penyedia (GoPay/DANA/OVO/dll.): " << RESET;
-        cin.ignore();
-        getline(cin, penyediaDompetBaru);
-    } else if (pilihanJenis == 3) {
-        jenisDompetBaru = "M-Banking";
-        cout << "  " << KUNING << "Nama Penyedia (BCA/BRI/BNI/Mandiri/dll.): " << RESET;
-        cin.ignore();
-        getline(cin, penyediaDompetBaru);
-    } else {
-        cout << MERAH << "\n  Pilihan tidak valid.\n" << RESET;
-        jedaLayar(); return;
-    }
-
-    double saldoAwalDompet = bacaDouble("  Saldo Awal (Rp): ");
-    if (saldoAwalDompet < 0) {
-        cout << MERAH << "\n  Saldo tidak boleh negatif.\n" << RESET;
-        jedaLayar(); return;
-    }
-
-    Dompet dompetBaru;
-    dompetBaru.identifikasiDompet = "W" + to_string(penghitungDompet++);
-    dompetBaru.namaDompet         = namaDompetBaru;
-    dompetBaru.jenisDompet        = jenisDompetBaru;
-    dompetBaru.penyediaDompet     = penyediaDompetBaru;
-    dompetBaru.saldoDompet        = saldoAwalDompet;
-    dompetBaru.waktuDibuat        = dapatkanWaktuSekarang();
-
-    if (saldoAwalDompet > 0) totalPendapatan += saldoAwalDompet;
-    daftarDompet.push_back(dompetBaru);
-
-    tambahEntriLogAudit("Tambah Dompet",
-        "Dompet '" + namaDompetBaru + "' (" + jenisDompetBaru + "/" + penyediaDompetBaru + ")"
-        + " saldo awal " + formatRupiah(saldoAwalDompet));
-
-    cetakLoading("\n  Menyimpan data dompet");
-    cout << "\n  " << HIJAU_TERANG << TEBAL << IKON_CEK << " Dompet berhasil ditambahkan!" << RESET << "\n";
-    cout << "  ID Dompet : " << KUNING << dompetBaru.identifikasiDompet << RESET << "\n";
-    jedaLayar();
 }
 
 void editDompet() {
-    bersihLayar();
-    cetakStatusBar(namaAkunAktif);
-    cetakHeader("  WALLET MANAGEMENT  ·  Edit Dompet  ");
+    while (true) {
+        bersihLayar();
+        cetakStatusBar(namaAkunAktif);
+        cetakHeader("  WALLET MANAGEMENT  ·  Edit Dompet  ");
 
-    if (daftarDompet.empty()) {
-        cout << MERAH << "\n  Belum ada dompet.\n" << RESET;
-        jedaLayar(); return;
+        if (daftarDompet.empty()) {
+            cout << MERAH << "\n  Belum ada dompet.\n" << RESET;
+            jedaLayar(); return;
+        }
+
+        tampilkanDaftarDompet(false);
+        int indexDompet = bacaInteger("\n  Nomor dompet yang ingin diedit: ") - 1;
+        if (indexDompet == -1000) return;
+        if (indexDompet < 0 || indexDompet >= (int)daftarDompet.size()) {
+            cout << MERAH << "  Nomor tidak valid.\n" << RESET;
+            jedaLayar();
+            continue;
+        }
+
+        Dompet& dompetDipilih = daftarDompet[indexDompet];
+        string namaBaruDompet, penyediaBaruDompet;
+
+        cout << "\n  Nama baru [" << KUNING << dompetDipilih.namaDompet << RESET << "]: ";
+        getline(cin, namaBaruDompet);
+        if (!namaBaruDompet.empty()) dompetDipilih.namaDompet = namaBaruDompet;
+
+        if (dompetDipilih.jenisDompet != "Cash") {
+            cout << "  Penyedia baru [" << KUNING << dompetDipilih.penyediaDompet << RESET << "]: ";
+            getline(cin, penyediaBaruDompet);
+            if (!penyediaBaruDompet.empty()) dompetDipilih.penyediaDompet = penyediaBaruDompet;
+        }
+
+        tambahEntriLogAudit("Edit Dompet", "Dompet ID " + dompetDipilih.identifikasiDompet + " diperbarui");
+        cout << HIJAU_TERANG << "\n  " << IKON_CEK << " Dompet berhasil diperbarui!\n" << RESET;
+        jedaLayar();
+        return;
     }
-
-    tampilkanDaftarDompet(false);
-    int indexDompet = bacaInteger("\n  Nomor dompet yang ingin diedit: ") - 1;
-    if (indexDompet < 0 || indexDompet >= (int)daftarDompet.size()) {
-        cout << MERAH << "  Nomor tidak valid.\n" << RESET;
-        jedaLayar(); return;
-    }
-
-    Dompet& dompetDipilih = daftarDompet[indexDompet];
-    string namaBaruDompet, penyediaBaruDompet;
-
-    cout << "\n  Nama baru [" << KUNING << dompetDipilih.namaDompet << RESET << "]: ";
-    cin.ignore(numeric_limits<streamsize>::max(), '\n'); getline(cin, namaBaruDompet);
-    if (!namaBaruDompet.empty()) dompetDipilih.namaDompet = namaBaruDompet;
-
-    if (dompetDipilih.jenisDompet != "Cash") {
-        cout << "  Penyedia baru [" << KUNING << dompetDipilih.penyediaDompet << RESET << "]: ";
-        getline(cin, penyediaBaruDompet);
-        if (!penyediaBaruDompet.empty()) dompetDipilih.penyediaDompet = penyediaBaruDompet;
-    }
-
-    tambahEntriLogAudit("Edit Dompet", "Dompet ID " + dompetDipilih.identifikasiDompet + " diperbarui");
-    cout << HIJAU_TERANG << "\n  " << IKON_CEK << " Dompet berhasil diperbarui!\n" << RESET;
-    jedaLayar();
 }
 
 void hapusDompet() {
-    bersihLayar();
-    cetakStatusBar(namaAkunAktif);
-    cetakHeader("  WALLET MANAGEMENT  ·  Hapus Dompet  ");
+    while (true) {
+        bersihLayar();
+        cetakStatusBar(namaAkunAktif);
+        cetakHeader("  WALLET MANAGEMENT  ·  Hapus Dompet  ");
 
-    if (daftarDompet.empty()) {
-        cout << MERAH << "\n  Belum ada dompet.\n" << RESET;
-        jedaLayar(); return;
-    }
+        if (daftarDompet.empty()) {
+            cout << MERAH << "\n  Belum ada dompet.\n" << RESET;
+            jedaLayar(); return;
+        }
 
-    tampilkanDaftarDompet(false);
-    int indexDompet = bacaInteger("\n  Nomor dompet yang ingin dihapus: ") - 1;
-    if (indexDompet < 0 || indexDompet >= (int)daftarDompet.size()) {
-        cout << MERAH << "  Nomor tidak valid.\n" << RESET;
-        jedaLayar(); return;
-    }
+        tampilkanDaftarDompet(false);
+        int indexDompet = bacaInteger("\n  Nomor dompet yang ingin dihapus: ") - 1;
+        if (indexDompet == -1000) return;
+        if (indexDompet < 0 || indexDompet >= (int)daftarDompet.size()) {
+            cout << MERAH << "  Nomor tidak valid.\n" << RESET;
+            jedaLayar();
+            continue;
+        }
 
-    cout << MERAH << "\n  Yakin hapus dompet '" << daftarDompet[indexDompet].namaDompet << "'? (ya/tidak): " << RESET;
-    string konfirmasi; cin >> konfirmasi;
-    if (konfirmasi == "ya" || konfirmasi == "YA") {
-        tambahEntriLogAudit("Hapus Dompet", "Dompet '" + daftarDompet[indexDompet].namaDompet + "' dihapus");
-        daftarDompet.erase(daftarDompet.begin() + indexDompet);
-        cout << HIJAU_TERANG << "\n  " << IKON_CEK << " Dompet berhasil dihapus!\n" << RESET;
-    } else {
-        cout << KUNING << "\n  Penghapusan dibatalkan.\n" << RESET;
+        cout << MERAH << "\n  Yakin hapus dompet '" << daftarDompet[indexDompet].namaDompet << "'? (ya/tidak): " << RESET;
+        string konfirmasi;
+        getline(cin, konfirmasi);
+        if (konfirmasi.empty()) {
+            cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+            jedaLayar();
+            return;
+        }
+
+        if (konfirmasi == "ya" || konfirmasi == "YA") {
+            tambahEntriLogAudit("Hapus Dompet", "Dompet '" + daftarDompet[indexDompet].namaDompet + "' dihapus");
+            daftarDompet.erase(daftarDompet.begin() + indexDompet);
+            cout << HIJAU_TERANG << "\n  " << IKON_CEK << " Dompet berhasil dihapus!\n" << RESET;
+        } else {
+            cout << KUNING << "\n  Penghapusan dibatalkan.\n" << RESET;
+        }
+        jedaLayar();
+        return;
     }
-    jedaLayar();
 }
 
 void transferAntarDompet() {
-    bersihLayar();
-    cetakStatusBar(namaAkunAktif);
-    cetakHeader("  WALLET MANAGEMENT  ·  Transfer Antar Dompet  ");
+    while (true) {
+        bersihLayar();
+        cetakStatusBar(namaAkunAktif);
+        cetakHeader("  WALLET MANAGEMENT  ·  Transfer Antar Dompet  ");
 
-    if ((int)daftarDompet.size() < 2) {
-        cout << MERAH << "\n  Minimal diperlukan 2 dompet untuk transfer.\n" << RESET;
-        jedaLayar(); return;
+        if ((int)daftarDompet.size() < 2) {
+            cout << MERAH << "\n  Minimal diperlukan 2 dompet untuk transfer.\n" << RESET;
+            jedaLayar(); return;
+        }
+
+        tampilkanDaftarDompet(false);
+        int indexAsal = bacaInteger("\n  Dari dompet nomor  : ") - 1;
+        if (indexAsal == -1000) return;
+
+        int indexTujuan = bacaInteger("  Ke dompet nomor    : ") - 1;
+        if (indexTujuan == -1000) return;
+
+        if (indexAsal < 0 || indexAsal >= (int)daftarDompet.size() ||
+            indexTujuan < 0 || indexTujuan >= (int)daftarDompet.size() ||
+            indexAsal == indexTujuan) {
+            cout << MERAH << "\n  Nomor dompet tidak valid atau sama.\n" << RESET;
+            jedaLayar();
+            continue;
+        }
+
+        double jumlahTransfer = bacaDouble("  Jumlah transfer (Rp): ");
+        if (jumlahTransfer == -999) return;
+        if (jumlahTransfer <= 0 || jumlahTransfer > daftarDompet[indexAsal].saldoDompet) {
+            cout << MERAH << "\n  Jumlah tidak valid atau saldo tidak mencukupi.\n"
+                 << "  Saldo tersedia: " << formatRupiah(daftarDompet[indexAsal].saldoDompet) << RESET << "\n";
+            jedaLayar();
+            continue;
+        }
+
+        daftarDompet[indexAsal].saldoDompet   -= jumlahTransfer;
+        daftarDompet[indexTujuan].saldoDompet += jumlahTransfer;
+
+        string detailTransfer = "Transfer " + formatRupiah(jumlahTransfer)
+            + " dari '" + daftarDompet[indexAsal].namaDompet
+            + "' ke '" + daftarDompet[indexTujuan].namaDompet + "'";
+        tambahEntriLogAudit("Transfer Dompet", detailTransfer);
+
+        cetakLoading("\n  Memproses transfer");
+        cout << "\n  " << HIJAU_TERANG << TEBAL << IKON_CEK << " Transfer berhasil!" << RESET << "\n";
+        cetakPembagiTipis();
+        cout << "  " << MERAH   << daftarDompet[indexAsal].namaDompet << RESET
+             << " => " << HIJAU << formatRupiah(daftarDompet[indexAsal].saldoDompet) << RESET << "\n";
+        cout << "  " << HIJAU   << daftarDompet[indexTujuan].namaDompet << RESET
+             << " => " << HIJAU << formatRupiah(daftarDompet[indexTujuan].saldoDompet) << RESET << "\n";
+        jedaLayar();
+        return;
     }
-
-    tampilkanDaftarDompet(false);
-    int indexAsal   = bacaInteger("\n  Dari dompet nomor  : ") - 1;
-    int indexTujuan = bacaInteger("  Ke dompet nomor    : ") - 1;
-
-    if (indexAsal < 0 || indexAsal >= (int)daftarDompet.size() ||
-        indexTujuan < 0 || indexTujuan >= (int)daftarDompet.size() ||
-        indexAsal == indexTujuan) {
-        cout << MERAH << "\n  Nomor dompet tidak valid atau sama.\n" << RESET;
-        jedaLayar(); return;
-    }
-
-    double jumlahTransfer = bacaDouble("  Jumlah transfer (Rp): ");
-    if (jumlahTransfer <= 0 || jumlahTransfer > daftarDompet[indexAsal].saldoDompet) {
-        cout << MERAH << "\n  Jumlah tidak valid atau saldo tidak mencukupi.\n"
-             << "  Saldo tersedia: " << formatRupiah(daftarDompet[indexAsal].saldoDompet) << RESET << "\n";
-        jedaLayar(); return;
-    }
-
-    daftarDompet[indexAsal].saldoDompet   -= jumlahTransfer;
-    daftarDompet[indexTujuan].saldoDompet += jumlahTransfer;
-
-    string detailTransfer = "Transfer " + formatRupiah(jumlahTransfer)
-        + " dari '" + daftarDompet[indexAsal].namaDompet
-        + "' ke '" + daftarDompet[indexTujuan].namaDompet + "'";
-    tambahEntriLogAudit("Transfer Dompet", detailTransfer);
-
-    cetakLoading("\n  Memproses transfer");
-    cout << "\n  " << HIJAU_TERANG << TEBAL << IKON_CEK << " Transfer berhasil!" << RESET << "\n";
-    cetakPembagiTipis();
-    cout << "  " << MERAH   << daftarDompet[indexAsal].namaDompet << RESET
-         << " => " << HIJAU << formatRupiah(daftarDompet[indexAsal].saldoDompet) << RESET << "\n";
-    cout << "  " << HIJAU   << daftarDompet[indexTujuan].namaDompet << RESET
-         << " => " << HIJAU << formatRupiah(daftarDompet[indexTujuan].saldoDompet) << RESET << "\n";
-    jedaLayar();
 }
 
 void menuWalletManagement() {
@@ -1079,16 +1129,17 @@ void menuWalletManagement() {
              << "  (" << daftarDompet.size() << " dompet)\n";
         cetakSpasi();
 
-        cetakItemMenu("1", "Tambah Dompet Baru",       HIJAU_TERANG,  IKON_LINGKARAN);
-        cetakItemMenu("2", "Edit Dompet",              KUNING_TERANG, IKON_LINGKARAN);
-        cetakItemMenu("3", "Hapus Dompet",             MERAH_TERANG,  IKON_LINGKARAN);
-        cetakItemMenu("4", "Lihat Daftar Dompet",      CYAN_TERANG,   IKON_LINGKARAN);
-        cetakItemMenu("5", "Transfer Antar Dompet",    BIRU_TERANG,   IKON_LINGKARAN);
+        cetakItemMenu("1", "Tambah Dompet Baru",    HIJAU_TERANG,  IKON_LINGKARAN);
+        cetakItemMenu("2", "Edit Dompet",           KUNING_TERANG, IKON_LINGKARAN);
+        cetakItemMenu("3", "Hapus Dompet",          MERAH_TERANG,  IKON_LINGKARAN);
+        cetakItemMenu("4", "Lihat Daftar Dompet",   CYAN_TERANG,   IKON_LINGKARAN);
+        cetakItemMenu("5", "Transfer Antar Dompet", BIRU_TERANG,   IKON_LINGKARAN);
         cetakPembagiTipis();
-        cetakItemMenu("0", "Kembali ke Menu Utama",    MERAH,         IKON_PANAH);
+        cetakItemMenu("0", "Kembali ke Menu Utama", MERAH,         IKON_PANAH);
         cetakPembagiTipis();
 
         pilihanMenu = bacaInteger("  Pilihan: ");
+        if (pilihanMenu == -999) continue;
 
         switch (pilihanMenu) {
             case 1: tambahDompet();          break;
@@ -1116,126 +1167,135 @@ Dompet* cariDompetBerdasarkanID(const string& idDompet) {
 }
 
 void tambahTransaksi(const string& jenisTransaksiBaru) {
-    bersihLayar();
-    cetakStatusBar(namaAkunAktif);
-    cetakHeader("  TRANSACTION MANAGEMENT  ·  Tambah " + jenisTransaksiBaru + "  ");
+    while (true) {
+        bersihLayar();
+        cetakStatusBar(namaAkunAktif);
+        cetakHeader("  TRANSACTION MANAGEMENT  ·  Tambah " + jenisTransaksiBaru + "  ");
 
-    if (daftarDompet.empty()) {
-        cout << MERAH << "\n  Belum ada dompet. Tambahkan dompet terlebih dahulu!\n" << RESET;
-        jedaLayar(); return;
+        if (daftarDompet.empty()) {
+            cout << MERAH << "\n  Belum ada dompet. Tambahkan dompet terlebih dahulu!\n" << RESET;
+            jedaLayar(); return;
+        }
+
+        cetakSpasi();
+        cout << "  " << TEBAL << CYAN << "Daftar Dompet Tersedia:" << RESET << "\n";
+        cetakPembagiTipis();
+        for (int i = 0; i < (int)daftarDompet.size(); i++) {
+            string warnaJenis = (daftarDompet[i].jenisDompet == "Cash") ? HIJAU
+                              : (daftarDompet[i].jenisDompet == "E-Wallet") ? KUNING : CYAN;
+            cout << "  [" << KUNING_TERANG << TEBAL << (i + 1) << RESET << "]  "
+                 << left << setw(20) << potongTeks(daftarDompet[i].namaDompet, 19)
+                 << warnaJenis << setw(12) << daftarDompet[i].jenisDompet << RESET
+                 << HIJAU << formatRupiah(daftarDompet[i].saldoDompet) << RESET << "\n";
+        }
+
+        int indexDompetDipilih = bacaInteger("\n  Pilih nomor dompet: ") - 1;
+        if (indexDompetDipilih == -1000) return;
+        if (indexDompetDipilih < 0 || indexDompetDipilih >= (int)daftarDompet.size()) {
+            cout << MERAH << "  Dompet tidak valid.\n" << RESET;
+            jedaLayar();
+            continue;
+        }
+        Dompet& dompetDipilih = daftarDompet[indexDompetDipilih];
+
+        string deskripsiTransaksiBaru;
+        cout << "\n  " << KUNING << "Deskripsi        : " << RESET;
+        getline(cin, deskripsiTransaksiBaru);
+        if (deskripsiTransaksiBaru.empty()) {
+            cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+            jedaLayar();
+            return;
+        }
+
+        double jumlahTransaksiBaru = bacaDouble("  Jumlah (Rp)      : ");
+        if (jumlahTransaksiBaru == -999) return;
+        if (jumlahTransaksiBaru <= 0) {
+            cout << MERAH << "  Jumlah harus lebih dari 0.\n" << RESET;
+            jedaLayar();
+            continue;
+        }
+
+        cetakSpasi();
+        cout << "  " << KUNING << "Kategori Budget  :" << RESET << "\n";
+        cetakItemMenu("1", "Needs    (Kebutuhan pokok)",   HIJAU,  IKON_LINGKARAN);
+        cetakItemMenu("2", "Wants    (Keinginan)",          KUNING, IKON_LINGKARAN);
+        cetakItemMenu("3", "Savings  (Tabungan/Investasi)", CYAN,   IKON_LINGKARAN);
+        int pilihanKategori = bacaInteger("  Pilihan: ");
+        if (pilihanKategori == -999) return;
+
+        string kategoriTransaksiBaru;
+        if (pilihanKategori == 1)      kategoriTransaksiBaru = "Needs";
+        else if (pilihanKategori == 2) kategoriTransaksiBaru = "Wants";
+        else if (pilihanKategori == 3) kategoriTransaksiBaru = "Savings";
+        else {
+            cout << MERAH << "  Kategori tidak valid.\n" << RESET;
+            jedaLayar();
+            continue;
+        }
+
+        if (jenisTransaksiBaru == "Expense" && dompetDipilih.saldoDompet < jumlahTransaksiBaru) {
+            cout << MERAH << "\n  Saldo tidak mencukupi!\n"
+                 << "  Saldo tersedia: " << formatRupiah(dompetDipilih.saldoDompet) << "\n" << RESET;
+            jedaLayar();
+            continue;
+        }
+
+        Transaksi transaksiObjek;
+        transaksiObjek.idTransaksi         = hasilkanIDTransaksi();
+        transaksiObjek.jenisTransaksi      = jenisTransaksiBaru;
+        transaksiObjek.kategoriTransaksi   = kategoriTransaksiBaru;
+        transaksiObjek.deskripsiTransaksi  = deskripsiTransaksiBaru;
+        transaksiObjek.jumlahTransaksi     = jumlahTransaksiBaru;
+        transaksiObjek.idDompetTransaksi   = dompetDipilih.identifikasiDompet;
+        transaksiObjek.namaDompetTransaksi = dompetDipilih.namaDompet;
+        transaksiObjek.waktuTransaksi      = dapatkanWaktuSekarang();
+
+        string hashSebelumnya = daftarTransaksi.empty()
+            ? "0000000000000000"
+            : daftarTransaksi.back().hashSaatIni;
+        transaksiObjek.hashSebelumnya = hashSebelumnya;
+        string dataUntukHash = transaksiObjek.idTransaksi
+            + transaksiObjek.jenisTransaksi
+            + to_string(jumlahTransaksiBaru)
+            + transaksiObjek.waktuTransaksi
+            + hashSebelumnya;
+        transaksiObjek.hashSaatIni = hasilkanHash(dataUntukHash);
+
+        if (jenisTransaksiBaru == "Income") {
+            dompetDipilih.saldoDompet += jumlahTransaksiBaru;
+            totalPendapatan           += jumlahTransaksiBaru;
+        } else {
+            dompetDipilih.saldoDompet -= jumlahTransaksiBaru;
+            totalPengeluaran          += jumlahTransaksiBaru;
+            if (kategoriTransaksiBaru == "Needs")        pengeluaranKebutuhan += jumlahTransaksiBaru;
+            else if (kategoriTransaksiBaru == "Wants")   pengeluaranKeinginan += jumlahTransaksiBaru;
+            else if (kategoriTransaksiBaru == "Savings") pengeluaranTabungan  += jumlahTransaksiBaru;
+        }
+
+        daftarTransaksi.push_back(transaksiObjek);
+        tambahEntriLogAudit("Tambah Transaksi",
+            transaksiObjek.idTransaksi + " | " + jenisTransaksiBaru
+            + " | " + formatRupiah(jumlahTransaksiBaru) + " | " + deskripsiTransaksiBaru);
+
+        cetakLoading("\n  Memproses transaksi & validasi hash");
+        cetakSpasi();
+        cout << "  " << BG_HIJAU << TEBAL << PUTIH_TERANG << "  TRANSAKSI BERHASIL DICATAT  " << RESET << "\n";
+        cetakPembagiTipis();
+        cout << "  TXID          : " << KUNING_TERANG << TEBAL << transaksiObjek.idTransaksi << RESET << "\n";
+        cout << "  Jenis         : " << (jenisTransaksiBaru == "Income" ? HIJAU_TERANG : MERAH_TERANG)
+             << jenisTransaksiBaru << RESET << "\n";
+        cout << "  Kategori      : " << transaksiObjek.kategoriTransaksi << "\n";
+        cout << "  Jumlah        : " << TEBAL << formatRupiah(jumlahTransaksiBaru) << RESET << "\n";
+        cout << "  Dompet        : " << dompetDipilih.namaDompet << "\n";
+        cout << "  Saldo Dompet  : " << HIJAU << formatRupiah(dompetDipilih.saldoDompet) << RESET << "\n";
+        cout << "  Waktu         : " << transaksiObjek.waktuTransaksi << "\n";
+        cetakPembagiTipis();
+        cout << "  Hash Sebelumnya: " << REDUP << transaksiObjek.hashSebelumnya << RESET << "\n";
+        cout << "  Hash Saat Ini  : " << CYAN   << transaksiObjek.hashSaatIni  << RESET << "\n";
+        cetakPembagiTipis();
+        jedaLayar();
+        return;
     }
-
-    cetakSpasi();
-    cout << "  " << TEBAL << CYAN << "Daftar Dompet Tersedia:" << RESET << "\n";
-    cetakPembagiTipis();
-    for (int i = 0; i < (int)daftarDompet.size(); i++) {
-        string warnaJenis = (daftarDompet[i].jenisDompet == "Cash") ? HIJAU
-                          : (daftarDompet[i].jenisDompet == "E-Wallet") ? KUNING : CYAN;
-        cout << "  [" << KUNING_TERANG << TEBAL << (i + 1) << RESET << "]  "
-             << left << setw(20) << potongTeks(daftarDompet[i].namaDompet, 19)
-             << warnaJenis << setw(12) << daftarDompet[i].jenisDompet << RESET
-             << HIJAU << formatRupiah(daftarDompet[i].saldoDompet) << RESET << "\n";
-    }
-
-    int indexDompetDipilih = bacaInteger("\n  Pilih nomor dompet: ") - 1;
-    if (indexDompetDipilih < 0 || indexDompetDipilih >= (int)daftarDompet.size()) {
-        cout << MERAH << "  Dompet tidak valid.\n" << RESET;
-        jedaLayar(); return;
-    }
-    Dompet& dompetDipilih = daftarDompet[indexDompetDipilih];
-
-    string deskripsiTransaksiBaru;
-    cout << "\n  " << KUNING << "Deskripsi        : " << RESET;
-    cin.ignore(); getline(cin, deskripsiTransaksiBaru);
-    if (deskripsiTransaksiBaru.empty()) deskripsiTransaksiBaru = jenisTransaksiBaru;
-
-    double jumlahTransaksiBaru = bacaDouble("  Jumlah (Rp)      : ");
-    if (jumlahTransaksiBaru <= 0) {
-        cout << MERAH << "  Jumlah harus lebih dari 0.\n" << RESET;
-        jedaLayar(); return;
-    }
-
-    cetakSpasi();
-    cout << "  " << KUNING << "Kategori Budget  :" << RESET << "\n";
-    cetakItemMenu("1", "Needs    (Kebutuhan pokok)",  HIJAU,   IKON_LINGKARAN);
-    cetakItemMenu("2", "Wants    (Keinginan)",         KUNING,  IKON_LINGKARAN);
-    cetakItemMenu("3", "Savings  (Tabungan/Investasi)",CYAN,    IKON_LINGKARAN);
-    int pilihanKategori = bacaInteger("  Pilihan: ");
-
-    string kategoriTransaksiBaru;
-    if (pilihanKategori == 1)      kategoriTransaksiBaru = "Needs";
-    else if (pilihanKategori == 2) kategoriTransaksiBaru = "Wants";
-    else if (pilihanKategori == 3) kategoriTransaksiBaru = "Savings";
-    else {
-        cout << MERAH << "  Kategori tidak valid.\n" << RESET;
-        jedaLayar(); return;
-    }
-
-    if (jenisTransaksiBaru == "Expense" && dompetDipilih.saldoDompet < jumlahTransaksiBaru) {
-        cout << MERAH << "\n  Saldo tidak mencukupi!\n"
-             << "  Saldo tersedia: " << formatRupiah(dompetDipilih.saldoDompet) << "\n" << RESET;
-        jedaLayar(); return;
-    }
-
-    // Buat objek transaksi
-    Transaksi transaksiObjek;
-    transaksiObjek.idTransaksi         = hasilkanIDTransaksi();
-    transaksiObjek.jenisTransaksi      = jenisTransaksiBaru;
-    transaksiObjek.kategoriTransaksi   = kategoriTransaksiBaru;
-    transaksiObjek.deskripsiTransaksi  = deskripsiTransaksiBaru;
-    transaksiObjek.jumlahTransaksi     = jumlahTransaksiBaru;
-    transaksiObjek.idDompetTransaksi   = dompetDipilih.identifikasiDompet;
-    transaksiObjek.namaDompetTransaksi = dompetDipilih.namaDompet;
-    transaksiObjek.waktuTransaksi      = dapatkanWaktuSekarang();
-
-    // Hash chain (blockchain-inspired)
-    string hashSebelumnya = daftarTransaksi.empty()
-        ? "0000000000000000"
-        : daftarTransaksi.back().hashSaatIni;
-    transaksiObjek.hashSebelumnya = hashSebelumnya;
-    string dataUntukHash = transaksiObjek.idTransaksi
-        + transaksiObjek.jenisTransaksi
-        + to_string(jumlahTransaksiBaru)
-        + transaksiObjek.waktuTransaksi
-        + hashSebelumnya;
-    transaksiObjek.hashSaatIni = hasilkanHash(dataUntukHash);
-
-    // Update saldo dan statistik
-    if (jenisTransaksiBaru == "Income") {
-        dompetDipilih.saldoDompet += jumlahTransaksiBaru;
-        totalPendapatan           += jumlahTransaksiBaru;
-    } else { // Expense
-        dompetDipilih.saldoDompet -= jumlahTransaksiBaru;
-        totalPengeluaran          += jumlahTransaksiBaru;
-        if (kategoriTransaksiBaru == "Needs")    pengeluaranKebutuhan += jumlahTransaksiBaru;
-        else if (kategoriTransaksiBaru == "Wants")   pengeluaranKeinginan += jumlahTransaksiBaru;
-        else if (kategoriTransaksiBaru == "Savings") pengeluaranTabungan  += jumlahTransaksiBaru;
-    }
-
-    daftarTransaksi.push_back(transaksiObjek);
-    tambahEntriLogAudit("Tambah Transaksi",
-        transaksiObjek.idTransaksi + " | " + jenisTransaksiBaru
-        + " | " + formatRupiah(jumlahTransaksiBaru) + " | " + deskripsiTransaksiBaru);
-
-    cetakLoading("\n  Memproses transaksi & validasi hash");
-
-    // Tampilkan struk transaksi
-    cetakSpasi();
-    cout << "  " << BG_HIJAU << TEBAL << PUTIH_TERANG << "  TRANSAKSI BERHASIL DICATAT  " << RESET << "\n";
-    cetakPembagiTipis();
-    cout << "  TXID          : " << KUNING_TERANG << TEBAL << transaksiObjek.idTransaksi << RESET << "\n";
-    cout << "  Jenis         : " << (jenisTransaksiBaru == "Income" ? HIJAU_TERANG : MERAH_TERANG)
-         << jenisTransaksiBaru << RESET << "\n";
-    cout << "  Kategori      : " << transaksiObjek.kategoriTransaksi << "\n";
-    cout << "  Jumlah        : " << TEBAL << formatRupiah(jumlahTransaksiBaru) << RESET << "\n";
-    cout << "  Dompet        : " << dompetDipilih.namaDompet << "\n";
-    cout << "  Saldo Dompet  : " << HIJAU << formatRupiah(dompetDipilih.saldoDompet) << RESET << "\n";
-    cout << "  Waktu         : " << transaksiObjek.waktuTransaksi << "\n";
-    cetakPembagiTipis();
-    cout << "  Hash Sebelumnya: " << REDUP << transaksiObjek.hashSebelumnya << RESET << "\n";
-    cout << "  Hash Saat Ini  : " << CYAN   << transaksiObjek.hashSaatIni  << RESET << "\n";
-    cetakPembagiTipis();
-    jedaLayar();
 }
 
 void tampilkanRiwayatTransaksi(bool jedaSetelah = true) {
@@ -1279,88 +1339,103 @@ void tampilkanRiwayatTransaksi(bool jedaSetelah = true) {
 }
 
 void cariTransaksi() {
-    bersihLayar();
-    cetakStatusBar(namaAkunAktif);
-    cetakHeader("  TRANSACTION MANAGEMENT  ·  Cari Transaksi  ");
-    cetakSpasi();
+    while (true) {
+        bersihLayar();
+        cetakStatusBar(namaAkunAktif);
+        cetakHeader("  TRANSACTION MANAGEMENT  ·  Cari Transaksi  ");
+        cetakSpasi();
 
-    cout << "  " << KUNING << "Kata kunci (TXID / deskripsi / kategori): " << RESET;
-    string kataKunciCari;
-    cin.ignore(); getline(cin, kataKunciCari);
-
-    bool ditemukan = false;
-    cetakPembagiTipis();
-    for (const auto& transaksi : daftarTransaksi) {
-        if (transaksi.idTransaksi.find(kataKunciCari) != string::npos ||
-            transaksi.deskripsiTransaksi.find(kataKunciCari) != string::npos ||
-            transaksi.kategoriTransaksi.find(kataKunciCari) != string::npos ||
-            transaksi.jenisTransaksi.find(kataKunciCari) != string::npos) {
-            ditemukan = true;
-            string warnaJenis = (transaksi.jenisTransaksi == "Income") ? HIJAU_TERANG : MERAH_TERANG;
-            cout << "\n  " << KUNING << TEBAL << "TXID      : " << RESET << transaksi.idTransaksi << "\n";
-            cout << "  Jenis     : " << warnaJenis << transaksi.jenisTransaksi << RESET << "\n";
-            cout << "  Deskripsi : " << transaksi.deskripsiTransaksi << "\n";
-            cout << "  Kategori  : " << transaksi.kategoriTransaksi << "\n";
-            cout << "  Jumlah    : " << TEBAL << formatRupiah(transaksi.jumlahTransaksi) << RESET << "\n";
-            cout << "  Dompet    : " << transaksi.namaDompetTransaksi << "\n";
-            cout << "  Waktu     : " << transaksi.waktuTransaksi << "\n";
-            cout << "  Hash      : " << CYAN << transaksi.hashSaatIni << RESET << "\n";
-            cetakPembagiTipis();
+        cout << "  " << KUNING << "Kata kunci (TXID / deskripsi / kategori): " << RESET;
+        string kataKunciCari;
+        getline(cin, kataKunciCari);
+        if (kataKunciCari.empty()) {
+            cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+            jedaLayar();
+            return;
         }
+
+        bool ditemukan = false;
+        cetakPembagiTipis();
+        for (const auto& transaksi : daftarTransaksi) {
+            if (transaksi.idTransaksi.find(kataKunciCari) != string::npos ||
+                transaksi.deskripsiTransaksi.find(kataKunciCari) != string::npos ||
+                transaksi.kategoriTransaksi.find(kataKunciCari) != string::npos ||
+                transaksi.jenisTransaksi.find(kataKunciCari) != string::npos) {
+                ditemukan = true;
+                string warnaJenis = (transaksi.jenisTransaksi == "Income") ? HIJAU_TERANG : MERAH_TERANG;
+                cout << "\n  " << KUNING << TEBAL << "TXID      : " << RESET << transaksi.idTransaksi << "\n";
+                cout << "  Jenis     : " << warnaJenis << transaksi.jenisTransaksi << RESET << "\n";
+                cout << "  Deskripsi : " << transaksi.deskripsiTransaksi << "\n";
+                cout << "  Kategori  : " << transaksi.kategoriTransaksi << "\n";
+                cout << "  Jumlah    : " << TEBAL << formatRupiah(transaksi.jumlahTransaksi) << RESET << "\n";
+                cout << "  Dompet    : " << transaksi.namaDompetTransaksi << "\n";
+                cout << "  Waktu     : " << transaksi.waktuTransaksi << "\n";
+                cout << "  Hash      : " << CYAN << transaksi.hashSaatIni << RESET << "\n";
+                cetakPembagiTipis();
+            }
+        }
+        if (!ditemukan) {
+            cout << "\n  " << MERAH << IKON_SILANG << " Tidak ditemukan transaksi dengan kata kunci: '"
+                 << kataKunciCari << "'\n" << RESET;
+        }
+        jedaLayar();
+        return;
     }
-    if (!ditemukan) {
-        cout << "\n  " << MERAH << IKON_SILANG << " Tidak ditemukan transaksi dengan kata kunci: '"
-             << kataKunciCari << "'\n" << RESET;
-    }
-    jedaLayar();
 }
 
 void hapusTransaksi() {
-    bersihLayar();
-    cetakStatusBar(namaAkunAktif);
-    cetakHeader("  TRANSACTION MANAGEMENT  ·  Hapus Transaksi  ");
+    while (true) {
+        bersihLayar();
+        cetakStatusBar(namaAkunAktif);
+        cetakHeader("  TRANSACTION MANAGEMENT  ·  Hapus Transaksi  ");
 
-    if (daftarTransaksi.empty()) {
-        cout << MERAH << "\n  Belum ada transaksi.\n" << RESET;
-        jedaLayar(); return;
-    }
-
-    tampilkanRiwayatTransaksi(false);
-
-    string txidYangDihapus;
-    cout << "\n  " << KUNING << "Masukkan TXID yang akan dihapus: " << RESET;
-    cin.ignore(); getline(cin, txidYangDihapus);
-
-    for (int i = 0; i < (int)daftarTransaksi.size(); i++) {
-        if (daftarTransaksi[i].idTransaksi == txidYangDihapus) {
-            Transaksi& t = daftarTransaksi[i];
-
-            // Rollback saldo dan statistik
-            Dompet* dompetTransaksi = cariDompetBerdasarkanID(t.idDompetTransaksi);
-            if (dompetTransaksi) {
-                if (t.jenisTransaksi == "Income") {
-                    dompetTransaksi->saldoDompet -= t.jumlahTransaksi;
-                    totalPendapatan              -= t.jumlahTransaksi;
-                } else {
-                    dompetTransaksi->saldoDompet += t.jumlahTransaksi;
-                    totalPengeluaran             -= t.jumlahTransaksi;
-                }
-            }
-            if (t.jenisTransaksi == "Expense") {
-                if (t.kategoriTransaksi == "Needs")    pengeluaranKebutuhan -= t.jumlahTransaksi;
-                else if (t.kategoriTransaksi == "Wants")   pengeluaranKeinginan -= t.jumlahTransaksi;
-                else if (t.kategoriTransaksi == "Savings") pengeluaranTabungan  -= t.jumlahTransaksi;
-            }
-
-            tambahEntriLogAudit("Hapus Transaksi", txidYangDihapus + " dihapus & saldo di-rollback");
-            daftarTransaksi.erase(daftarTransaksi.begin() + i);
-            cout << HIJAU_TERANG << "\n  " << IKON_CEK << " Transaksi berhasil dihapus dan saldo dirollback!\n" << RESET;
+        if (daftarTransaksi.empty()) {
+            cout << MERAH << "\n  Belum ada transaksi.\n" << RESET;
             jedaLayar(); return;
         }
-    }
 
-    cout << MERAH << "\n  " << IKON_SILANG << " TXID tidak ditemukan.\n" << RESET;
-    jedaLayar();
+        tampilkanRiwayatTransaksi(false);
+
+        string txidYangDihapus;
+        cout << "\n  " << KUNING << "Masukkan TXID yang akan dihapus: " << RESET;
+        getline(cin, txidYangDihapus);
+        if (txidYangDihapus.empty()) {
+            cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+            jedaLayar();
+            return;
+        }
+
+        for (int i = 0; i < (int)daftarTransaksi.size(); i++) {
+            if (daftarTransaksi[i].idTransaksi == txidYangDihapus) {
+                Transaksi& t = daftarTransaksi[i];
+
+                Dompet* dompetTransaksi = cariDompetBerdasarkanID(t.idDompetTransaksi);
+                if (dompetTransaksi) {
+                    if (t.jenisTransaksi == "Income") {
+                        dompetTransaksi->saldoDompet -= t.jumlahTransaksi;
+                        totalPendapatan              -= t.jumlahTransaksi;
+                    } else {
+                        dompetTransaksi->saldoDompet += t.jumlahTransaksi;
+                        totalPengeluaran             -= t.jumlahTransaksi;
+                    }
+                }
+                if (t.jenisTransaksi == "Expense") {
+                    if (t.kategoriTransaksi == "Needs")        pengeluaranKebutuhan -= t.jumlahTransaksi;
+                    else if (t.kategoriTransaksi == "Wants")   pengeluaranKeinginan -= t.jumlahTransaksi;
+                    else if (t.kategoriTransaksi == "Savings") pengeluaranTabungan  -= t.jumlahTransaksi;
+                }
+
+                tambahEntriLogAudit("Hapus Transaksi", txidYangDihapus + " dihapus & saldo di-rollback");
+                daftarTransaksi.erase(daftarTransaksi.begin() + i);
+                cout << HIJAU_TERANG << "\n  " << IKON_CEK << " Transaksi berhasil dihapus dan saldo dirollback!\n" << RESET;
+                jedaLayar(); return;
+            }
+        }
+
+        cout << MERAH << "\n  " << IKON_SILANG << " TXID tidak ditemukan.\n" << RESET;
+        jedaLayar();
+        return;
+    }
 }
 
 void menuTransactionManagement() {
@@ -1378,23 +1453,24 @@ void menuTransactionManagement() {
              << formatRupiah(hitungSaldoBersih()) << RESET << "\n";
         cetakSpasi();
 
-        cetakItemMenu("1", "Tambah Income  (Pemasukan)",    HIJAU_TERANG,   IKON_GRAFIK);
-        cetakItemMenu("2", "Tambah Expense (Pengeluaran)",  MERAH_TERANG,   IKON_PANAH_BAWAH);
-        cetakItemMenu("3", "Riwayat Transaksi",             CYAN_TERANG,    IKON_LINGKARAN);
-        cetakItemMenu("4", "Cari Transaksi",                KUNING_TERANG,  IKON_LINGKARAN);
-        cetakItemMenu("5", "Hapus Transaksi",               MAGENTA_TERANG, IKON_LINGKARAN);
+        cetakItemMenu("1", "Tambah Income  (Pemasukan)",   HIJAU_TERANG,   IKON_GRAFIK);
+        cetakItemMenu("2", "Tambah Expense (Pengeluaran)", MERAH_TERANG,   IKON_PANAH_BAWAH);
+        cetakItemMenu("3", "Riwayat Transaksi",            CYAN_TERANG,    IKON_LINGKARAN);
+        cetakItemMenu("4", "Cari Transaksi",               KUNING_TERANG,  IKON_LINGKARAN);
+        cetakItemMenu("5", "Hapus Transaksi",              MAGENTA_TERANG, IKON_LINGKARAN);
         cetakPembagiTipis();
-        cetakItemMenu("0", "Kembali ke Menu Utama",         MERAH,          IKON_PANAH);
+        cetakItemMenu("0", "Kembali ke Menu Utama",        MERAH,          IKON_PANAH);
         cetakPembagiTipis();
 
         pilihanMenu = bacaInteger("  Pilihan: ");
+        if (pilihanMenu == -999) continue;
 
         switch (pilihanMenu) {
-            case 1: tambahTransaksi("Income");          break;
-            case 2: tambahTransaksi("Expense");         break;
-            case 3: tampilkanRiwayatTransaksi();        break;
-            case 4: cariTransaksi();                    break;
-            case 5: hapusTransaksi();                   break;
+            case 1: tambahTransaksi("Income");   break;
+            case 2: tambahTransaksi("Expense");  break;
+            case 3: tampilkanRiwayatTransaksi(); break;
+            case 4: cariTransaksi();             break;
+            case 5: hapusTransaksi();            break;
             case 0: break;
             default:
                 cout << MERAH << "\n  Pilihan tidak valid.\n" << RESET;
@@ -1598,6 +1674,7 @@ void menuBudgetManager() {
         cetakPembagiTipis();
 
         pilihanMenu = bacaInteger("  Pilihan: ");
+        if (pilihanMenu == -999) continue;
 
         switch (pilihanMenu) {
             case 1: tampilkanStatusBudget();    break;
@@ -1660,185 +1737,212 @@ void tampilkanDaftarTarget(bool jedaSetelah = true) {
 }
 
 void tambahTarget() {
-    bersihLayar();
-    cetakStatusBar(namaAkunAktif);
-    cetakHeader("  GOAL TRACKER  ·  Tambah Target Keuangan  ");
-    cetakSpasi();
+    while (true) {
+        bersihLayar();
+        cetakStatusBar(namaAkunAktif);
+        cetakHeader("  GOAL TRACKER  ·  Tambah Target Keuangan  ");
+        cetakSpasi();
 
-    cout << "  " << KUNING << "Nama Target (contoh: Laptop, Dana Darurat, Liburan): " << RESET;
-    string namaTargetBaru;
-    cin.ignore(); getline(cin, namaTargetBaru);
-    if (namaTargetBaru.empty()) {
-        cout << MERAH << "\n  Nama target tidak boleh kosong.\n" << RESET;
-        jedaLayar(); return;
+        cout << "  " << KUNING << "Nama Target (contoh: Laptop, Dana Darurat, Liburan): " << RESET;
+        string namaTargetBaru;
+        getline(cin, namaTargetBaru);
+        if (namaTargetBaru.empty()) {
+            cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+            jedaLayar();
+            continue;
+        }
+
+        double nominalTargetBaru = bacaDouble("  Target Nominal (Rp): ");
+        if (nominalTargetBaru == -999) return;
+        if (nominalTargetBaru <= 0) {
+            cout << MERAH << "\n  Nominal harus lebih dari 0.\n" << RESET;
+            jedaLayar(); return;
+        }
+
+        TargetKeuangan targetBaru;
+        targetBaru.identifikasiTarget = "G" + to_string(penghitungTarget++);
+        targetBaru.namaTarget         = namaTargetBaru;
+        targetBaru.nominalTarget      = nominalTargetBaru;
+        targetBaru.nominalTerkumpul   = 0.0;
+        targetBaru.waktuDibuat        = dapatkanWaktuSekarang();
+        daftarTarget.push_back(targetBaru);
+
+        tambahEntriLogAudit("Tambah Target", "Goal '" + namaTargetBaru + "' target " + formatRupiah(nominalTargetBaru));
+
+        cetakLoading("\n  Menyimpan target");
+        cout << "\n  " << HIJAU_TERANG << TEBAL << IKON_CEK << " Target berhasil ditambahkan!\n" << RESET;
+        cout << "  ID Target : " << KUNING << targetBaru.identifikasiTarget << RESET << "\n";
+        jedaLayar();
+        return;
     }
-
-    double nominalTargetBaru = bacaDouble("  Target Nominal (Rp): ");
-    if (nominalTargetBaru <= 0) {
-        cout << MERAH << "\n  Nominal harus lebih dari 0.\n" << RESET;
-        jedaLayar(); return;
-    }
-
-    TargetKeuangan targetBaru;
-    targetBaru.identifikasiTarget = "G" + to_string(penghitungTarget++);
-    targetBaru.namaTarget         = namaTargetBaru;
-    targetBaru.nominalTarget      = nominalTargetBaru;
-    targetBaru.nominalTerkumpul   = 0.0;
-    targetBaru.waktuDibuat        = dapatkanWaktuSekarang();
-    daftarTarget.push_back(targetBaru);
-
-    tambahEntriLogAudit("Tambah Target", "Goal '" + namaTargetBaru + "' target " + formatRupiah(nominalTargetBaru));
-
-    cetakLoading("\n  Menyimpan target");
-    cout << "\n  " << HIJAU_TERANG << TEBAL << IKON_CEK << " Target berhasil ditambahkan!\n" << RESET;
-    cout << "  ID Target : " << KUNING << targetBaru.identifikasiTarget << RESET << "\n";
-    jedaLayar();
 }
 
 void perbaruiProgressTarget() {
-    bersihLayar();
-    cetakStatusBar(namaAkunAktif);
-    cetakHeader("  GOAL TRACKER  ·  Update Progress Target  ");
+    while (true) {
+        bersihLayar();
+        cetakStatusBar(namaAkunAktif);
+        cetakHeader("  GOAL TRACKER  ·  Update Progress Target  ");
 
-    if (daftarTarget.empty()) {
-        cout << MERAH << "\n  Belum ada target.\n" << RESET;
-        jedaLayar(); return;
-    }
+        if (daftarTarget.empty()) {
+            cout << MERAH << "\n  Belum ada target.\n" << RESET;
+            jedaLayar(); return;
+        }
 
-    tampilkanDaftarTarget(false);
-    int indexTarget = bacaInteger("\n  Nomor target yang ingin diperbarui: ") - 1;
-    if (indexTarget < 0 || indexTarget >= (int)daftarTarget.size()) {
-        cout << MERAH << "  Nomor tidak valid.\n" << RESET;
-        jedaLayar(); return;
-    }
+        tampilkanDaftarTarget(false);
+        int indexTarget = bacaInteger("\n  Nomor target yang ingin diperbarui: ") - 1;
+        if (indexTarget == -1000) return;
+        if (indexTarget < 0 || indexTarget >= (int)daftarTarget.size()) {
+            cout << MERAH << "  Nomor tidak valid.\n" << RESET;
+            jedaLayar(); return;
+        }
 
-    TargetKeuangan& targetDipilih = daftarTarget[indexTarget];
-    if (daftarDompet.empty()) {
-        cout << MERAH << "\n  Tidak ada dompet tersedia.\n" << RESET;
-        jedaLayar();
-        return;
-    }
-    cout << "\n  Pilih sumber dana:\n\n";
-    for (int i = 0; i < (int)daftarDompet.size(); i++) {
-        cout << "  ["  << i + 1 << "] " << daftarDompet[i].namaDompet << " (" << formatRupiah(daftarDompet[i].saldoDompet) << ")\n";
-    }
+        TargetKeuangan& targetDipilih = daftarTarget[indexTarget];
+        if (daftarDompet.empty()) {
+            cout << MERAH << "\n  Tidak ada dompet tersedia.\n" << RESET;
+            jedaLayar();
+            return;
+        }
+        cout << "\n  Pilih sumber dana:\n\n";
+        for (int i = 0; i < (int)daftarDompet.size(); i++) {
+            cout << "  ["  << i + 1 << "] " << daftarDompet[i].namaDompet << " (" << formatRupiah(daftarDompet[i].saldoDompet) << ")\n";
+        }
 
-    int indexDompet = bacaInteger("\n  Ambil dana dari dompet: ") - 1;
-    if (indexDompet < 0 || indexDompet >= (int)daftarDompet.size()) {
-        cout << MERAH << "  Dompet tidak valid.\n" << RESET;
-        jedaLayar();
-        return;
-    }
+        int indexDompet = bacaInteger("\n  Ambil dana dari dompet: ") - 1;
+        if (indexDompet == -1000) return;
+        if (indexDompet < 0 || indexDompet >= (int)daftarDompet.size()) {
+            cout << MERAH << "  Dompet tidak valid.\n" << RESET;
+            jedaLayar();
+            return;
+        }
 
-    Dompet& dompet = daftarDompet[indexDompet];
-    double tambahanDana = bacaDouble("  Tambah dana (Rp): ");
-    if (tambahanDana <= 0) {
-        cout << MERAH << "  Jumlah harus lebih dari 0.\n" << RESET;
-        jedaLayar();
-        return;
-    }
+        Dompet& dompet = daftarDompet[indexDompet];
+        double tambahanDana = bacaDouble("  Tambah dana (Rp): ");
+        if (tambahanDana == -999) return;
+        if (tambahanDana <= 0) {
+            cout << MERAH << "  Jumlah harus lebih dari 0.\n" << RESET;
+            jedaLayar();
+            return;
+        }
 
-    if (tambahanDana > dompet.saldoDompet) {
-        cout << MERAH << "  Saldo dompet tidak cukup.\n" << RESET;
-        jedaLayar();
-        return;
-    }
-    double sisaTarget = targetDipilih.nominalTarget - targetDipilih.nominalTerkumpul;
-    if (sisaTarget <= 0) {
-        cout << KUNING << "  Target sudah tercapai.\n" << RESET;
-        jedaLayar();
-        return;
-    }
-    if (tambahanDana > sisaTarget) {
-        cout << KUNING << "\n  Nominal melebihi target.\n"
-                       << "  Disesuaikan menjadi " << formatRupiah(sisaTarget) << RESET << "\n";
-        tambahanDana =  sisaTarget;
-    }
-    dompet.saldoDompet -= tambahanDana;
-    targetDipilih.nominalTerkumpul += tambahanDana;
-    double persentaseBaru = targetDipilih.nominalTarget > 0 ? min(100.0,(targetDipilih.nominalTerkumpul/targetDipilih.nominalTarget) * 100):0;
+        if (tambahanDana > dompet.saldoDompet) {
+            cout << MERAH << "  Saldo dompet tidak cukup.\n" << RESET;
+            jedaLayar();
+            return;
+        }
+        double sisaTarget = targetDipilih.nominalTarget - targetDipilih.nominalTerkumpul;
+        if (sisaTarget <= 0) {
+            cout << KUNING << "  Target sudah tercapai.\n" << RESET;
+            jedaLayar();
+            return;
+        }
+        if (tambahanDana > sisaTarget) {
+            cout << KUNING << "\n  Nominal melebihi target.\n"
+                           << "  Disesuaikan menjadi " << formatRupiah(sisaTarget) << RESET << "\n";
+            tambahanDana =  sisaTarget;
+        }
+        dompet.saldoDompet -= tambahanDana;
+        targetDipilih.nominalTerkumpul += tambahanDana;
+        double persentaseBaru = targetDipilih.nominalTarget > 0 ? min(100.0,(targetDipilih.nominalTerkumpul/targetDipilih.nominalTarget) * 100):0;
 
-    Transaksi tx;
-    tx.idTransaksi = hasilkanIDTransaksi();
-    tx.jenisTransaksi = "Expense";
-    tx.kategoriTransaksi = "Savings";
-    tx.jumlahTransaksi = tambahanDana;
-    tx.namaDompetTransaksi = dompet.namaDompet;
-    tx.idDompetTransaksi = dompet.identifikasiDompet;
-    tx.deskripsiTransaksi = "Goal: " + targetDipilih.namaTarget;
-    tx.waktuTransaksi = dapatkanWaktuSekarang();
-    daftarTransaksi.push_back(tx); 
+        Transaksi tx;
+        tx.idTransaksi = hasilkanIDTransaksi();
+        tx.jenisTransaksi = "Expense";
+        tx.kategoriTransaksi = "Savings";
+        tx.jumlahTransaksi = tambahanDana;
+        tx.namaDompetTransaksi = dompet.namaDompet;
+        tx.idDompetTransaksi = dompet.identifikasiDompet;
+        tx.deskripsiTransaksi = "Goal: " + targetDipilih.namaTarget;
+        tx.waktuTransaksi = dapatkanWaktuSekarang();
+        daftarTransaksi.push_back(tx); 
 
-    tambahEntriLogAudit("Update Target", "Goal '" + targetDipilih.namaTarget + "' +Rp" + to_string((long long)tambahanDana));
-    cout << "\n  " << HIJAU_TERANG << TEBAL << IKON_CEK << " Progress berhasil diperbarui!\n\n" << RESET;
-    cout << "  " << TEBAL << targetDipilih.namaTarget << RESET << "\n";
-    cout << "  ";
-    cetakProgressBarOtomatis(persentaseBaru, 10);
-    cout << "\n";
-    cout << "  Terkumpul: " << HIJAU_TERANG << formatRupiah(targetDipilih.nominalTerkumpul) << RESET
-         << "  dari  " << formatRupiah(targetDipilih.nominalTarget) << "\n";
-    cout << KUNING  << "\n  Saldo tersisa: " << formatRupiah(dompet.saldoDompet) << RESET << "\n";
-
-    if (persentaseBaru >= 100.0) {
-        cetakSpasi();
-        cetakBadge(" SELAMAT! TARGET TERCAPAI! ", BG_HIJAU);
+        tambahEntriLogAudit("Update Target", "Goal '" + targetDipilih.namaTarget + "' +Rp" + to_string((long long)tambahanDana));
+        cout << "\n  " << HIJAU_TERANG << TEBAL << IKON_CEK << " Progress berhasil diperbarui!\n\n" << RESET;
+        cout << "  " << TEBAL << targetDipilih.namaTarget << RESET << "\n";
+        cout << "  ";
+        cetakProgressBarOtomatis(persentaseBaru, 10);
         cout << "\n";
+        cout << "  Terkumpul: " << HIJAU_TERANG << formatRupiah(targetDipilih.nominalTerkumpul) << RESET
+             << "  dari  " << formatRupiah(targetDipilih.nominalTarget) << "\n";
+        cout << KUNING  << "\n  Saldo tersisa: " << formatRupiah(dompet.saldoDompet) << RESET << "\n";
+
+        if (persentaseBaru >= 100.0) {
+            cetakSpasi();
+            cetakBadge(" SELAMAT! TARGET TERCAPAI! ", BG_HIJAU);
+            cout << "\n";
+        }
+        jedaLayar();
+        return;
     }
-    jedaLayar();
 }
 
 void hapusTarget() {
-    bersihLayar();
-    cetakStatusBar(namaAkunAktif);
-    cetakHeader("  GOAL TRACKER  ·  Hapus Target  ");
+    while (true) {
+        bersihLayar();
+        cetakStatusBar(namaAkunAktif);
+        cetakHeader("  GOAL TRACKER  ·  Hapus Target  ");
 
-    if (daftarTarget.empty()) {
-        cout << MERAH << "\n  Belum ada target.\n" << RESET;
-        jedaLayar(); return;
-    }
+        if (daftarTarget.empty()) {
+            cout << MERAH << "\n  Belum ada target.\n" << RESET;
+            jedaLayar(); return;
+        }
 
-    tampilkanDaftarTarget(false);
-    int indexTarget = bacaInteger("\n  Nomor target yang ingin dihapus: ") - 1;
-    if (indexTarget < 0 || indexTarget >= (int)daftarTarget.size()) {
-        cout << MERAH << "  Nomor tidak valid.\n" << RESET;
-        jedaLayar(); return;
-    }
+        tampilkanDaftarTarget(false);
+        int indexTarget = bacaInteger("\n  Nomor target yang ingin dihapus: ") - 1;
+        if (indexTarget == -1000) return;
+        if (indexTarget < 0 || indexTarget >= (int)daftarTarget.size()) {
+            cout << MERAH << "  Nomor tidak valid.\n" << RESET;
+            jedaLayar(); return;
+        }
 
-    cout << MERAH << "\n  Yakin hapus target '" << daftarTarget[indexTarget].namaTarget << "'? (ya/tidak): " << RESET;
-    string konfirmasiHapus; cin >> konfirmasiHapus;
-    if (konfirmasiHapus == "ya" || konfirmasiHapus == "YA") {
-        TargetKeuangan& target = daftarTarget[indexTarget];
-        double danaTarget = target.nominalTerkumpul;
-        if (danaTarget > 0) {
-            cout << "\n  Dana terkumpul: " << formatRupiah(danaTarget) << "\n" << "  Kembalikan ke dompet? (ya/tidak): ";
-            string pilihan;
-            cin >> pilihan;
-            if (pilihan == "ya" || pilihan == "YA") {
-                cout << "\n  Pilih dompet:\n";
-                for (int i = 0; i < (int)daftarDompet.size(); i++) {
-                cout << "  ["  << i + 1 << "] " << daftarDompet[i].namaDompet << "\n";}
-                int indexDompet = bacaInteger("\n  Nomor dompet: ") - 1;
-                if (indexDompet >= 0 && indexDompet < (int)daftarDompet.size()) {
-                    daftarDompet[indexDompet].saldoDompet += danaTarget;
-                    cout << HIJAU_TERANG << "\n  Dana berhasil dikembalikan.\n" << RESET;
-                } else {
-                    cout << MERAH << "\n  Nomor dompet tidak valid. Dana tidak dikembalikan.\n" << RESET;
+        cout << MERAH << "\n  Yakin hapus target '" << daftarTarget[indexTarget].namaTarget << "'? (ya/tidak): " << RESET;
+        string konfirmasiHapus;
+        getline(cin, konfirmasiHapus);
+        if (konfirmasiHapus.empty()) {
+            cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+            jedaLayar();
+            return;
+        }
+
+        if (konfirmasiHapus == "ya" || konfirmasiHapus == "YA") {
+            TargetKeuangan& target = daftarTarget[indexTarget];
+            double danaTarget = target.nominalTerkumpul;
+            if (danaTarget > 0) {
+                cout << "\n  Dana terkumpul: " << formatRupiah(danaTarget) << "\n" << "  Kembalikan ke dompet? (ya/tidak): ";
+                string pilihan;
+                getline(cin, pilihan);
+                if (pilihan.empty()) {
+                    cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+                    jedaLayar();
+                    return;
+                } else if (pilihan == "ya" || pilihan == "YA") {
+                    cout << "\n  Pilih dompet:\n";
+                    for (int i = 0; i < (int)daftarDompet.size(); i++) {
+                    cout << "  ["  << i + 1 << "] " << daftarDompet[i].namaDompet << "\n";}
+                    int indexDompet = bacaInteger("\n  Nomor dompet: ") - 1;
+                    if (indexDompet >= 0 && indexDompet < (int)daftarDompet.size()) {
+                        daftarDompet[indexDompet].saldoDompet += danaTarget;
+                        cout << HIJAU_TERANG << "\n  Dana berhasil dikembalikan.\n" << RESET;
+                    } else {
+                        cout << MERAH << "\n  Nomor dompet tidak valid. Dana tidak dikembalikan.\n" << RESET;
+                    }
                 }
             }
+            tambahEntriLogAudit("Hapus Target", "Goal '" + target.namaTarget + "' dihapus");
+            daftarTarget.erase(daftarTarget.begin() + indexTarget);
+            cout << HIJAU_TERANG << "\n  " << IKON_CEK << " Target berhasil dihapus!\n" << RESET;
         }
-        tambahEntriLogAudit("Hapus Target", "Goal '" + target.namaTarget + "' dihapus");
-        daftarTarget.erase(daftarTarget.begin() + indexTarget);
-        cout << HIJAU_TERANG << "\n  " << IKON_CEK << " Target berhasil dihapus!\n" << RESET;
+        else {
+            cout << KUNING << "\n  Penghapusan dibatalkan.\n" << RESET;
+        }
+        jedaLayar();
+        return;
     }
-    else {
-        cout << KUNING << "\n  Penghapusan dibatalkan.\n" << RESET;
-    }
-    jedaLayar();
 }
 
 void menuGoalTracker() {
     int pilihanMenu;
-    do {
+
+    auto cetakHalamanGoalTracker = []() {
         bersihLayar();
         cetakStatusBar(namaAkunAktif);
         cetakHeader("  GOAL TRACKER  ");
@@ -1864,8 +1968,13 @@ void menuGoalTracker() {
         cetakPembagiTipis();
         cetakItemMenu("0", "Kembali ke Menu Utama",     MERAH,          IKON_PANAH);
         cetakPembagiTipis();
+    };
+
+    do {
+        cetakHalamanGoalTracker();
 
         pilihanMenu = bacaInteger("  Pilihan: ");
+        if (pilihanMenu == -999) continue;
 
         switch (pilihanMenu) {
             case 1: tambahTarget();            break;
@@ -1921,7 +2030,8 @@ void cetakTabelLogAudit(const vector<EntriLogAudit>& daftarEntri) {
 
 void menuAuditLog() {
     int pilihanMenu;
-    do {
+
+    auto cetakHalamanAuditLog = []() {
         bersihLayar();
         cetakStatusBar(namaAkunAktif);
         cetakHeader("  AUDIT LOG  ·  Riwayat Aktivitas  ");
@@ -1937,8 +2047,13 @@ void menuAuditLog() {
         cetakPembagiTipis();
         cetakItemMenu("0", "Kembali ke Menu Utama",       MERAH,          IKON_PANAH);
         cetakPembagiTipis();
+    };
+
+    do {
+        cetakHalamanAuditLog();
 
         pilihanMenu = bacaInteger("  Pilihan: ");
+        if (pilihanMenu == -999) continue;
 
         if (pilihanMenu == 1) {
             bersihLayar();
@@ -1954,7 +2069,12 @@ void menuAuditLog() {
             cetakSpasi();
             cout << "  " << KUNING << "Kata kunci (aktivitas / detail / user): " << RESET;
             string kataKunciLog;
-            cin.ignore(); getline(cin, kataKunciLog);
+            getline(cin, kataKunciLog);
+            if (kataKunciLog.empty()) {
+                cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+                jedaLayar();
+                continue;
+            }
             vector<EntriLogAudit> hasilFilter;
             for (const auto& entri : daftarLogAudit) {
                 if (entri.jenisAktivitas.find(kataKunciLog) != string::npos ||
@@ -2019,7 +2139,8 @@ void resetDataSesi() {
 // Mengembalikan true bila user memilih Kembali (logout ke menu autentikasi)
 bool menuFinancialManagementSystem() {
     int pilihanMenu;
-    do {
+
+    auto cetakHalamanMenuUtama = []() {
         bersihLayar();
         cetakStatusBar(namaAkunAktif);
 
@@ -2049,8 +2170,12 @@ bool menuFinancialManagementSystem() {
         cetakPembagiTipis();
         cetakItemMenu("0", "Kembali (Logout)",         MERAH_TERANG,   IKON_PANAH);
         cetakPembagiTipis();
+    };
 
+    do {
+        cetakHalamanMenuUtama();
         pilihanMenu = bacaInteger("  Pilihan: ");
+        if (pilihanMenu == -999) continue;
 
         switch (pilihanMenu) {
             case 1: tampilkanPersonalDashboard();       break;
@@ -2062,10 +2187,25 @@ bool menuFinancialManagementSystem() {
             case 0: {
                 tambahEntriLogAudit("Logout", "User " + namaAkunAktif + " logout");
                 cout << "\n  " << KUNING_TERANG << "  Sampai jumpa, " << TEBAL
-                     << namaAkunAktif << RESET << KUNING_TERANG << "! Sesi diakhiri.\n" << RESET;
+                    << namaAkunAktif << RESET << KUNING_TERANG << "! Sesi diakhiri.\n" << RESET;
 
                 cout << "\n  Reset data sesi ini? (ya/tidak): ";
-                string pilihanReset; cin >> pilihanReset;
+                string pilihanReset;
+                getline(cin, pilihanReset);
+
+                if (pilihanReset.empty()) {
+                    cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+                    jedaLayar();
+                    break; // batal logout → balik ke menu utama
+                }
+
+                if (pilihanReset != "ya" && pilihanReset != "YA" &&
+                    pilihanReset != "tidak" && pilihanReset != "TIDAK") {
+                    cout << MERAH << "\n  Jawaban tidak valid, ketik 'ya' atau 'tidak'.\n" << RESET;
+                    jedaLayar();
+                    break; // batal logout → balik ke menu utama
+                }
+
                 if (pilihanReset == "ya" || pilihanReset == "YA") {
                     resetDataSesi();
                     cout << KUNING << "  Data sesi berhasil direset.\n" << RESET;
@@ -2083,144 +2223,175 @@ bool menuFinancialManagementSystem() {
 // ═══════════════════════════════════════════════════════════════════════
 // [O]  AUTHENTICATION SYSTEM
 // ═══════════════════════════════════════════════════════════════════════
-
 bool prosesRegistrasi() {
-    bersihLayar();
-    cetakStatusBar();
-    cetakHeader("  AUTHENTICATION  ·  Sign Up — Daftar Akun Baru  ");
-    cetakSpasi();
+    while (true) {
+        bersihLayar();
+        cetakStatusBar();
+        cetakHeader("  AUTHENTICATION  ·  Sign Up — Daftar Akun Baru  ");
+        cetakSpasi();
 
-    string namaAkunBaru, kataKunciBaru, konfirmasiKataKunci;
+        string namaAkunBaru, kataKunciBaru, konfirmasiKataKunci;
 
-    cout << "  " << KUNING << TEBAL << "Username     : " << RESET;
-    cin >> namaAkunBaru;
+        cout << "  " << KUNING << TEBAL << "Username     : " << RESET;
+        getline(cin, namaAkunBaru);
+        if (namaAkunBaru.empty()) {
+            cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+            jedaLayar();
+            continue;
+        }
 
-    if (namaAkunBaru.size() < 3) {
-        cout << MERAH << "\n  " << IKON_SILANG << " Username minimal 3 karakter!\n" << RESET;
-        jedaLayar(); return false;
-    }
-    // Cek duplikasi
-    for (const auto& pengguna : daftarSemuaPengguna) {
-        if (pengguna.namaAkun == namaAkunBaru) {
-            cout << MERAH << "\n  " << IKON_SILANG << " Username '" << namaAkunBaru << "' sudah terdaftar!\n" << RESET;
+        if (namaAkunBaru.size() < 3) {
+            cout << MERAH << "\n  " << IKON_SILANG << " Username minimal 3 karakter!\n" << RESET;
             jedaLayar(); return false;
         }
+        // Cek duplikasi
+        for (const auto& pengguna : daftarSemuaPengguna) {
+            if (pengguna.namaAkun == namaAkunBaru) {
+                cout << MERAH << "\n  " << IKON_SILANG << " Username '" << namaAkunBaru << "' sudah terdaftar!\n" << RESET;
+                jedaLayar(); return false;
+            }
+        }
+
+        cout << "  " << KUNING << TEBAL << "Password     : " << RESET;
+        getline(cin, kataKunciBaru);
+        if (kataKunciBaru.empty()) {
+            cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+            jedaLayar();
+            continue;
+        }
+
+        cout << "  " << KUNING << TEBAL << "Konfirmasi   : " << RESET;
+        getline(cin, konfirmasiKataKunci);
+        if (konfirmasiKataKunci.empty()) {
+            cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
+            jedaLayar();
+            continue;
+        }
+
+        if ((int)kataKunciBaru.size() < 4) {
+            cout << MERAH << "\n  " << IKON_SILANG << " Password minimal 4 karakter!\n" << RESET;
+            jedaLayar(); return false;
+        }
+        if (kataKunciBaru != konfirmasiKataKunci) {
+            cout << MERAH << "\n  " << IKON_SILANG << " Password tidak cocok!\n" << RESET;
+            jedaLayar(); return false;
+        }
+        
+        // Audit global untuk registrasi
+        Pengguna penggunaBaru;
+        penggunaBaru.namaAkun    = namaAkunBaru;
+        penggunaBaru.kataKunci   = kataKunciBaru;
+        penggunaBaru.waktuDaftar = dapatkanWaktuSekarang();
+        daftarSemuaPengguna.push_back(penggunaBaru);
+
+        EntriLogAudit entriRegistrasi;
+        entriRegistrasi.waktuAktivitas   = dapatkanWaktuSekarang();
+        entriRegistrasi.namaAkunPengguna = namaAkunBaru;
+        entriRegistrasi.jenisAktivitas   = "Register";
+        entriRegistrasi.detailAktivitas  = "Akun baru terdaftar pada " + dapatkanWaktuSekarang();
+        daftarLogAudit.push_back(entriRegistrasi);
+
+        cetakLoading("\n  Menyimpan akun");
+        cout << "\n  " << BG_HIJAU << PUTIH_TERANG << TEBAL << " " << IKON_CEK << " Registrasi berhasil! Silakan Sign In. " << RESET << "\n";
+        jedaLayar();
+        return true;
     }
-
-    cout << "  " << KUNING << TEBAL << "Password     : " << RESET;
-    cin >> kataKunciBaru;
-    cout << "  " << KUNING << TEBAL << "Konfirmasi   : " << RESET;
-    cin >> konfirmasiKataKunci;
-
-    if ((int)kataKunciBaru.size() < 4) {
-        cout << MERAH << "\n  " << IKON_SILANG << " Password minimal 4 karakter!\n" << RESET;
-        jedaLayar(); return false;
-    }
-    if (kataKunciBaru != konfirmasiKataKunci) {
-        cout << MERAH << "\n  " << IKON_SILANG << " Password tidak cocok!\n" << RESET;
-        jedaLayar(); return false;
-    }
-
-    Pengguna penggunaBaru;
-    penggunaBaru.namaAkun    = namaAkunBaru;
-    penggunaBaru.kataKunci   = kataKunciBaru;
-    penggunaBaru.waktuDaftar = dapatkanWaktuSekarang();
-    daftarSemuaPengguna.push_back(penggunaBaru);
-
-    // Audit global untuk registrasi
-    EntriLogAudit entriRegistrasi;
-    entriRegistrasi.waktuAktivitas   = dapatkanWaktuSekarang();
-    entriRegistrasi.namaAkunPengguna = namaAkunBaru;
-    entriRegistrasi.jenisAktivitas   = "Register";
-    entriRegistrasi.detailAktivitas  = "Akun baru terdaftar pada " + dapatkanWaktuSekarang();
-    daftarLogAudit.push_back(entriRegistrasi);
-
-    cetakLoading("\n  Menyimpan akun");
-    cout << "\n  " << BG_HIJAU << PUTIH_TERANG << TEBAL << " " << IKON_CEK << " Registrasi berhasil! Silakan Sign In. " << RESET << "\n";
-    jedaLayar();
-    return true;
 }
 
 // Mengembalikan: 1 = berhasil login, 0 = username tidak ditemukan, -1 = diblokir (3x salah)
 int prosesLogin() {
-    bersihLayar();
-    cetakStatusBar();
-    cetakHeader("  AUTHENTICATION  ·  Sign In — Masuk ke Akun  ");
-    cetakSpasi();
+    while (true) {
+        bersihLayar();
+        cetakStatusBar();
+        cetakHeader("  AUTHENTICATION  ·  Sign In — Masuk ke Akun  ");
+        cetakSpasi();
 
-    if (daftarSemuaPengguna.empty()) {
-        cout << MERAH << "\n  " << IKON_SILANG << " Belum ada akun. Silakan Sign Up terlebih dahulu!\n" << RESET;
-        jedaLayar(); return 0;
-    }
+        if (daftarSemuaPengguna.empty()) {
+            cout << MERAH << "\n  " << IKON_SILANG << " Belum ada akun. Silakan Sign Up terlebih dahulu!\n" << RESET;
+            jedaLayar(); return 0;
+        }
 
-    string namaAkunLogin;
-    cout << "  " << KUNING << TEBAL << "Username  : " << RESET;
-    cin >> namaAkunLogin;
-
-    // Cari pengguna
-    Pengguna* penggunaDipilih = nullptr;
-    for (auto& pengguna : daftarSemuaPengguna) {
-        if (pengguna.namaAkun == namaAkunLogin) { penggunaDipilih = &pengguna; break; }
-    }
-    if (!penggunaDipilih) {
-        cout << MERAH << "\n  " << IKON_SILANG << " Username tidak ditemukan. Silakan Sign Up dulu.\n" << RESET;
-        jedaLayar(); return 0;
-    }
-
-    const int BATAS_PERCOBAAN_LOGIN = 3;
-    int jumlahPercobaan = 0;
-
-    while (jumlahPercobaan < BATAS_PERCOBAAN_LOGIN) {
-        cout << "  " << KUNING << TEBAL << "Password  : " << RESET;
-        string kataKunciLogin; cin >> kataKunciLogin;
-
-        if (kataKunciLogin == penggunaDipilih->kataKunci) {
-            namaAkunAktif = namaAkunLogin;
-            tambahEntriLogAudit("Login", "Login berhasil dari sesi baru");
-
-            cetakLoading("\n  Memverifikasi kredensial");
-            cout << "\n  " << BG_HIJAU << PUTIH_TERANG << TEBAL
-                 << " " << IKON_CEK << " Selamat datang, " << namaAkunLogin << "! " << RESET << "\n";
-            cout << "  " << REDUP << "Terdaftar pada: " << penggunaDipilih->waktuDaftar << RESET << "\n";
+        string namaAkunLogin;
+        cout << "  " << KUNING << TEBAL << "Username  : " << RESET;
+        getline(cin, namaAkunLogin);
+        if (namaAkunLogin.empty()) {
+            cout << MERAH << "\n  Input tidak boleh kosong. Harap masukkan data.\n" << RESET;
             jedaLayar();
-            return 1;
-        } else {
-            jumlahPercobaan++;
-            int sisaPercobaan = BATAS_PERCOBAAN_LOGIN - jumlahPercobaan;
-            if (sisaPercobaan > 0) {
-                cout << MERAH << "\n  " << IKON_SILANG << " Password salah! Sisa percobaan: "
-                     << TEBAL << sisaPercobaan << RESET << "\n\n";
+            continue;
+        }
+        // Cari pengguna
+        Pengguna* penggunaDipilih = nullptr;
+        for (auto& pengguna : daftarSemuaPengguna) {
+            if (pengguna.namaAkun == namaAkunLogin) { penggunaDipilih = &pengguna; break; }
+        }
+        if (!penggunaDipilih) {
+            cout << MERAH << "\n  " << IKON_SILANG << " Username tidak ditemukan. Silakan Sign Up dulu.\n" << RESET;
+            jedaLayar(); return 0;
+        }
+
+        const int BATAS_PERCOBAAN_LOGIN = 3;
+        int jumlahPercobaan = 0;
+
+        while (jumlahPercobaan < BATAS_PERCOBAAN_LOGIN) {
+            cout << "  " << KUNING << TEBAL << "Password  : " << RESET;
+            string kataKunciLogin;
+            getline(cin, kataKunciLogin);
+
+            if (kataKunciLogin.empty()) {
+                jumlahPercobaan++;
+                int sisaPercobaan = BATAS_PERCOBAAN_LOGIN - jumlahPercobaan;
+                if (sisaPercobaan > 0) {
+                    cout << MERAH << "\n  Input tidak boleh kosong. Sisa percobaan: "
+                         << TEBAL << sisaPercobaan << RESET << "\n\n";
+                }
+                continue;
+            }
+
+            if (kataKunciLogin == penggunaDipilih->kataKunci) {
+                namaAkunAktif = namaAkunLogin;
+                tambahEntriLogAudit("Login", "Login berhasil dari sesi baru");
+
+                cetakLoading("\n  Memverifikasi kredensial");
+                cout << "\n  " << BG_HIJAU << PUTIH_TERANG << TEBAL
+                     << " " << IKON_CEK << " Selamat datang, " << namaAkunLogin << "! " << RESET << "\n";
+                cout << "  " << REDUP << "Terdaftar pada: " << penggunaDipilih->waktuDaftar << RESET << "\n";
+                jedaLayar();
+                return 1;
+            } else {
+                jumlahPercobaan++;
+                int sisaPercobaan = BATAS_PERCOBAAN_LOGIN - jumlahPercobaan;
+                if (sisaPercobaan > 0) {
+                    cout << MERAH << "\n  " << IKON_SILANG << " Password salah! Sisa percobaan: "
+                         << TEBAL << sisaPercobaan << RESET << "\n\n";
+                }
             }
         }
+        // Akun diblokir setelah 3x salah
+        {
+            string baris1 = IKON_SILANG + string(" AKUN DIBLOKIR! Terlalu banyak percobaan!.");
+            string baris2 = "Program akan dihentikan secara paksa.";
+            const int lebarIsi = 48;
+            auto cetakBarisTengah = [&](const string& teks) {
+                int lebarTeks = lebarTampilUTF8(teks);
+                int kiri = max(0, (lebarIsi - lebarTeks) / 2);
+                int kanan = max(0, lebarIsi - kiri - lebarTeks);
+                cout << "║"
+                    << string(kiri, ' ')
+                    << teks
+                    << string(kanan, ' ')
+                    << "║\n";
+            };
+            cout << "\n"<< BG_MERAH << PUTIH_TERANG << TEBAL;
+            cout << "╔" << ulangKarakter("═", lebarIsi) << "╗\n";
+            cetakBarisTengah(baris1);
+            cetakBarisTengah(baris2);
+            cout << "╚" << ulangKarakter("═", lebarIsi) << "╝\n" << RESET;
+        }
+
+        tambahEntriLogAudit("Block", "Akun '" + namaAkunLogin + "' diblokir — 3x gagal login");
+        jedaLayar();
+        return -1; // diblokir
     }
-
-    // Akun diblokir setelah 3x salah
-    {
-        string baris1 = IKON_SILANG + string(" AKUN DIBLOKIR! Terlalu banyak percobaan!.");
-        string baris2 = "Program akan dihentikan secara paksa.";
-        const int lebarIsi = 48;
-        auto cetakBarisTengah = [&](const string& teks) {
-            int lebarTeks = lebarTampilUTF8(teks);
-
-            int kiri = max(0, (lebarIsi - lebarTeks) / 2);
-            int kanan = max(0, lebarIsi - kiri - lebarTeks);
-
-            cout << "║"
-                << string(kiri, ' ')
-                << teks
-                << string(kanan, ' ')
-                << "║\n";
-        };
-        cout << "\n"<< BG_MERAH << PUTIH_TERANG << TEBAL;
-        cout << "╔" << ulangKarakter("═", lebarIsi) << "╗\n";
-        cetakBarisTengah(baris1);
-        cetakBarisTengah(baris2);
-        cout << "╚" << ulangKarakter("═", lebarIsi) << "╝\n" << RESET;
-    }
-
-    tambahEntriLogAudit("Block", "Akun '" + namaAkunLogin + "' diblokir — 3x gagal login");
-    jedaLayar();
-    return -1; // diblokir
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -2260,6 +2431,7 @@ int main() {
         cetakPembagiTipis();
 
         int pilihanUtama = bacaInteger("  Pilihan: ");
+        if (pilihanUtama == -999) continue;
 
         switch (pilihanUtama) {
             case 1:
@@ -2297,6 +2469,7 @@ int main() {
             default:
                 cout << MERAH << "\n  Pilihan tidak valid. Coba lagi.\n" << RESET;
                 jedaLayar();
+                // while loop otomatis bersihLayar + reprint di atas
         }
     }
 
