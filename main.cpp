@@ -1,8 +1,7 @@
 /*
  * ╔══════════════════════════════════════════════════════════════════════╗
- * ║         FINCHAIN SECURE LEDGER  v2.0  —  ADVANCED TERMINAL UI       ║
+ * ║         FINCHAIN SECURE LEDGER  —  ADVANCED TERMINAL UI              ║
  * ║         Sistem Manajemen Keuangan Pribadi Berbasis Terminal          ║
- * ║         Ketua Kelompok : NI PUTU AYU DIAN SULASTRI                  ║
  * ║         Blockchain-Inspired Hash Chain · 50/30/20 Budget Rule        ║
  * ╚══════════════════════════════════════════════════════════════════════╝
  *
@@ -2456,8 +2455,6 @@ int main() {
                 cetakBannerFinchain();
                 cout << "\n  " << KUNING_TERANG << TEBAL
                      << "  Terima kasih telah menggunakan FinChain Secure Ledger!\n" << RESET;
-                cout << "  " << CYAN
-                     << "  Ketua Kelompok : NI PUTU AYU DIAN SULASTRI\n" << RESET;
                 cout << "  " << REDUP
                      << "  Semoga keuangan Anda selalu sehat dan terkelola.\n" << RESET;
                 cetakSpasi();
