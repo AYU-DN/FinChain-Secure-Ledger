@@ -36,68 +36,12 @@
 using namespace std;
 
 
-// DYNAMIC ARRAY MANUAL — pengganti std::vector (Modul 6: Pointer & Heap)
-// Menggunakan pointer + new/delete sebagai array dinamis di heap memory.
-template <typename T>
-struct DaftarDinamis {
-    T*     data;       // pointer ke array heap
-    int    ukuran;     // jumlah elemen aktif
-    int    kapasitas;  // kapasitas alokasi saat ini
+// [0]  FORWARD DECLARATION STRUCT (diperlukan sebelum fungsi array)
+// (Struct didefinisikan penuh di bagian [C], di sini hanya placeholder
+//  agar fungsi-fungsi array dinamis bisa dideklarasikan di bawah)
 
-    // Konstruktor: alokasikan kapasitas awal kecil
-    DaftarDinamis() : data(nullptr), ukuran(0), kapasitas(0) {}
-
-    // Destruktor: bebaskan memori heap
-    ~DaftarDinamis() {
-        delete[] data;
-        data = nullptr;
-    }
-
-    // Tambah elemen di akhir (seperti push_back)
-    void tambah(const T& elemen) {
-        if (ukuran == kapasitas) {
-            int kapasitasBaru = (kapasitas == 0) ? 4 : kapasitas * 2;
-            T* dataBaru = new T[kapasitasBaru];
-            for (int i = 0; i < ukuran; i++) dataBaru[i] = data[i];
-            delete[] data;
-            data      = dataBaru;
-            kapasitas = kapasitasBaru;
-        }
-        data[ukuran++] = elemen;
-    }
-
-    // Hapus elemen pada indeks tertentu (seperti erase)
-    void hapus(int indeks) {
-        if (indeks < 0 || indeks >= ukuran) return;
-        for (int i = indeks; i < ukuran - 1; i++) data[i] = data[i + 1];
-        ukuran--;
-    }
-
-    // Kosongkan semua elemen (seperti clear)
-    void bersihkan() {
-        delete[] data;
-        data      = nullptr;
-        ukuran    = 0;
-        kapasitas = 0;
-    }
-
-    // Akses elemen dengan operator []
-    T& operator[](int i)       { return data[i]; }
-    const T& operator[](int i) const { return data[i]; }
-
-    bool kosong()    const { return ukuran == 0; }
-    int  banyak()    const { return ukuran; }
-
-    // Elemen terakhir (seperti back())
-    T& terakhir()          { return data[ukuran - 1]; }
-    const T& terakhir() const { return data[ukuran - 1]; }
-
-    // Iterator untuk range-based for loop
-    T*       begin()       { return data; }
-    T*       end()         { return data + ukuran; }
-    const T* begin() const { return data; }
-    const T* end()   const { return data + ukuran; }
-};
+// Kapasitas awal heap alokasi
+#define KAPASITAS_AWAL 4
 
 // [A]  KONSTANTA WARNA & GAYA ANSI
 
@@ -423,7 +367,8 @@ struct TargetKeuangan {
     double nominalTarget;
     double nominalTerkumpul;
     string waktuDibuat;
-    DaftarDinamis<RiwayatSetoranTarget> riwayatSetoran;
+    // riwayatSetoran dihapus — tidak digunakan dalam logika program
+    // dan implementasi nested dynamic array melanggar aturan (OOP)
 };
 
 // ── Struktur Data: Entri Log Audit ──────────────────────────────────
@@ -435,17 +380,137 @@ struct EntriLogAudit {
 };
 
 // ═══════════════════════════════════════════════════════════════════════
-// [D]  STATE GLOBAL (Variabel Sesi)
+// [D]  ARRAY DINAMIS MANUAL (Modul 6: Pointer & Heap)
+//      Setiap tipe data punya pointer heap sendiri + size + capacity.
+//      Dikelola lewat fungsi biasa (bukan method/OOP).
 // ═══════════════════════════════════════════════════════════════════════
 
-DaftarDinamis<Pengguna>        daftarSemuaPengguna;
+// ── Array Dinamis: Pengguna ──────────────────────────────────────────
+Pengguna* arrPengguna    = nullptr;
+int       ukuranPengguna = 0;
+int       kapPengguna    = 0;
 
-// Data sesi aktif (direset saat logout + reset)
-string                         namaAkunAktif   = "";
-DaftarDinamis<Dompet>          daftarDompet;
-DaftarDinamis<Transaksi>       daftarTransaksi;
-DaftarDinamis<TargetKeuangan>  daftarTarget;
-DaftarDinamis<EntriLogAudit>   daftarLogAudit;
+void tambahPengguna(const Pengguna& p) {
+    if (ukuranPengguna == kapPengguna) {
+        int kapBaru = (kapPengguna == 0) ? KAPASITAS_AWAL : kapPengguna * 2;
+        Pengguna* tmp = new Pengguna[kapBaru];
+        for (int i = 0; i < ukuranPengguna; i++) tmp[i] = arrPengguna[i];
+        delete[] arrPengguna;
+        arrPengguna = tmp;
+        kapPengguna = kapBaru;
+    }
+    arrPengguna[ukuranPengguna++] = p;
+}
+
+// ── Array Dinamis: Dompet ────────────────────────────────────────────
+Dompet* arrDompet    = nullptr;
+int     ukuranDompet = 0;
+int     kapDompet    = 0;
+
+void tambahDompetArr(const Dompet& d) {
+    if (ukuranDompet == kapDompet) {
+        int kapBaru = (kapDompet == 0) ? KAPASITAS_AWAL : kapDompet * 2;
+        Dompet* tmp = new Dompet[kapBaru];
+        for (int i = 0; i < ukuranDompet; i++) tmp[i] = arrDompet[i];
+        delete[] arrDompet;
+        arrDompet = tmp;
+        kapDompet = kapBaru;
+    }
+    arrDompet[ukuranDompet++] = d;
+}
+
+void hapusDompetArr(int idx) {
+    if (idx < 0 || idx >= ukuranDompet) return;
+    for (int i = idx; i < ukuranDompet - 1; i++) arrDompet[i] = arrDompet[i + 1];
+    ukuranDompet--;
+}
+
+void bersihkanDompetArr() {
+    delete[] arrDompet;
+    arrDompet = nullptr;
+    ukuranDompet = 0;
+    kapDompet = 0;
+}
+
+// ── Array Dinamis: Transaksi ─────────────────────────────────────────
+Transaksi* arrTransaksi    = nullptr;
+int        ukuranTransaksi = 0;
+int        kapTransaksi    = 0;
+
+void tambahTransaksiArr(const Transaksi& t) {
+    if (ukuranTransaksi == kapTransaksi) {
+        int kapBaru = (kapTransaksi == 0) ? KAPASITAS_AWAL : kapTransaksi * 2;
+        Transaksi* tmp = new Transaksi[kapBaru];
+        for (int i = 0; i < ukuranTransaksi; i++) tmp[i] = arrTransaksi[i];
+        delete[] arrTransaksi;
+        arrTransaksi = tmp;
+        kapTransaksi = kapBaru;
+    }
+    arrTransaksi[ukuranTransaksi++] = t;
+}
+
+void hapusTransaksiArr(int idx) {
+    if (idx < 0 || idx >= ukuranTransaksi) return;
+    for (int i = idx; i < ukuranTransaksi - 1; i++) arrTransaksi[i] = arrTransaksi[i + 1];
+    ukuranTransaksi--;
+}
+
+void bersihkanTransaksiArr() {
+    delete[] arrTransaksi;
+    arrTransaksi = nullptr;
+    ukuranTransaksi = 0;
+    kapTransaksi = 0;
+}
+
+// ── Array Dinamis: TargetKeuangan ────────────────────────────────────
+TargetKeuangan* arrTarget    = nullptr;
+int             ukuranTarget = 0;
+int             kapTarget    = 0;
+
+void tambahTargetArr(const TargetKeuangan& t) {
+    if (ukuranTarget == kapTarget) {
+        int kapBaru = (kapTarget == 0) ? KAPASITAS_AWAL : kapTarget * 2;
+        TargetKeuangan* tmp = new TargetKeuangan[kapBaru];
+        for (int i = 0; i < ukuranTarget; i++) tmp[i] = arrTarget[i];
+        delete[] arrTarget;
+        arrTarget = tmp;
+        kapTarget = kapBaru;
+    }
+    arrTarget[ukuranTarget++] = t;
+}
+
+void hapusTargetArr(int idx) {
+    if (idx < 0 || idx >= ukuranTarget) return;
+    for (int i = idx; i < ukuranTarget - 1; i++) arrTarget[i] = arrTarget[i + 1];
+    ukuranTarget--;
+}
+
+void bersihkanTargetArr() {
+    delete[] arrTarget;
+    arrTarget = nullptr;
+    ukuranTarget = 0;
+    kapTarget = 0;
+}
+
+// ── Array Dinamis: EntriLogAudit ─────────────────────────────────────
+EntriLogAudit* arrLogAudit    = nullptr;
+int            ukuranLogAudit = 0;
+int            kapLogAudit    = 0;
+
+void tambahLogAuditArr(const EntriLogAudit& e) {
+    if (ukuranLogAudit == kapLogAudit) {
+        int kapBaru = (kapLogAudit == 0) ? KAPASITAS_AWAL : kapLogAudit * 2;
+        EntriLogAudit* tmp = new EntriLogAudit[kapBaru];
+        for (int i = 0; i < ukuranLogAudit; i++) tmp[i] = arrLogAudit[i];
+        delete[] arrLogAudit;
+        arrLogAudit = tmp;
+        kapLogAudit = kapBaru;
+    }
+    arrLogAudit[ukuranLogAudit++] = e;
+}
+
+// ── State Sesi Aktif ─────────────────────────────────────────────────
+string namaAkunAktif = "";
 
 // Statistik keuangan sesi
 double totalPendapatan      = 0.0;
@@ -464,7 +529,7 @@ int penghitungTarget = 1;
 
 double hitungTotalAset() {
     double total = 0.0;
-    for (const auto& dompet : daftarDompet) total += dompet.saldoDompet;
+    for (int _id = 0; _id < ukuranDompet; _id++) { Dompet& dompet = arrDompet[_id]; total += dompet.saldoDompet; }
     return total;
 }
 
@@ -492,18 +557,16 @@ double hitungPersentaseBudget() {
 }
 
 double hitungRataRataProgressTarget() {
-    if (daftarTarget.kosong()) return 0.0;
+    if (ukuranTarget == 0) return 0.0;
     double jumlahPersentase = 0.0;
-    for (const auto& target : daftarTarget) {
+    for (int _ig = 0; _ig < ukuranTarget; _ig++) { TargetKeuangan& target = arrTarget[_ig];
         if (target.nominalTarget > 0)
             jumlahPersentase += min(100.0, target.nominalTerkumpul / target.nominalTarget * 100.0);
     }
-    return jumlahPersentase / daftarTarget.banyak();
+    return jumlahPersentase / ukuranTarget;
 }
 
-// ═══════════════════════════════════════════════════════════════════════
 // [F]  FUNGSI BANTU UI  — header, divider, banner, kartu, tabel
-// ═══════════════════════════════════════════════════════════════════════
 
 // Cetak baris pembagi tipis
 void cetakPembagiTipis() {
@@ -641,9 +704,7 @@ void cetakStatusBar(const string& namaUser = "") {
          << RESET << "\n";
 }
 
-// ═══════════════════════════════════════════════════════════════════════
 // [G]  MODUL AUDIT LOG — fungsi tambah entri log
-// ═══════════════════════════════════════════════════════════════════════
 
 void tambahEntriLogAudit(const string& jenisAktivitas, const string& detailAktivitas) {
     EntriLogAudit entri;
@@ -651,12 +712,10 @@ void tambahEntriLogAudit(const string& jenisAktivitas, const string& detailAktiv
     entri.namaAkunPengguna   = namaAkunAktif;
     entri.jenisAktivitas     = jenisAktivitas;
     entri.detailAktivitas    = detailAktivitas;
-    daftarLogAudit.tambah(entri);
+    tambahLogAuditArr(entri);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
 // [H]  MODUL PERSONAL DASHBOARD
-// ═══════════════════════════════════════════════════════════════════════
 
 void tampilkanPersonalDashboard() {
     bersihLayar();
@@ -713,7 +772,7 @@ void tampilkanPersonalDashboard() {
     cetakPembagiTipis();
 
     double saldoCash = 0, saldoEWallet = 0, saldoMBanking = 0;
-    for (const auto& dompet : daftarDompet) {
+    for (int _id = 0; _id < ukuranDompet; _id++) { Dompet& dompet = arrDompet[_id];
         if (dompet.jenisDompet == "Cash")       saldoCash    += dompet.saldoDompet;
         else if (dompet.jenisDompet == "E-Wallet")  saldoEWallet += dompet.saldoDompet;
         else if (dompet.jenisDompet == "M-Banking") saldoMBanking += dompet.saldoDompet;
@@ -744,10 +803,10 @@ void tampilkanPersonalDashboard() {
     cout << "  " << KUNING_TERANG << TEBAL << IKON_BINTANG << " GOAL OVERVIEW" << RESET << "\n";
     cetakPembagiTipis();
 
-    if (daftarTarget.kosong()) {
+    if (ukuranTarget == 0) {
         cout << "  " << REDUP << MIRING << "Belum ada target. Tambahkan di Goal Tracker!" << RESET << "\n";
     } else {
-        for (const auto& target : daftarTarget) {
+        for (int _ig = 0; _ig < ukuranTarget; _ig++) { TargetKeuangan& target = arrTarget[_ig];
             double persentaseTarget = (target.nominalTarget > 0)
                 ? min(100.0, target.nominalTerkumpul / target.nominalTarget * 100.0) : 0.0;
             cout << "  " << TEBAL << potongTeks(target.namaTarget, 22) << RESET << " ";
@@ -765,18 +824,18 @@ void tampilkanPersonalDashboard() {
     cout << "  " << KUNING_TERANG << TEBAL << IKON_BINTANG << " RECENT ACTIVITY  (5 Transaksi Terakhir)" << RESET << "\n";
     cetakPembagiTipis();
 
-    if (daftarTransaksi.kosong()) {
+    if (ukuranTransaksi == 0) {
         cout << "  " << REDUP << MIRING << "Belum ada transaksi." << RESET << "\n";
     } else {
-        int mulaiDari = max(0, (int)daftarTransaksi.banyak() - 5);
+        int mulaiDari = max(0, (int)ukuranTransaksi - 5);
         cout << "  " << TEBAL << CYAN
              << left << setw(18) << "Waktu"
              << setw(9)  << "Jenis"
              << setw(17) << "Jumlah"
              << "Deskripsi" << RESET << "\n";
         cetakPembagiTipis();
-        for (int i = (int)daftarTransaksi.banyak() - 1; i >= mulaiDari; i--) {
-            const auto& t = daftarTransaksi[i];
+        for (int i = (int)ukuranTransaksi - 1; i >= mulaiDari; i--) {
+            const auto& t = arrTransaksi[i];
             string warnaJenis = (t.jenisTransaksi == "Income") ? HIJAU_TERANG : MERAH_TERANG;
             string ikonJenis  = (t.jenisTransaksi == "Income") ? IKON_GRAFIK  : IKON_PANAH_BAWAH;
             cout << "  " << REDUP << t.waktuTransaksi.substr(0,16) << RESET
@@ -786,123 +845,94 @@ void tampilkanPersonalDashboard() {
         }
     }
 
-    // ── Bagian: Visualisasi Kesehatan Keuangan ───────────────────────
-cetakSpasi();
-cout << "  " << KUNING_TERANG << TEBAL
-     << IKON_BINTANG
-     << " VISUALISASI KESEHATAN KEUANGAN"
-     << RESET << "\n";
+        // ── Bagian: Visualisasi Kesehatan Keuangan ───────────────────────
+    cetakSpasi();
+    cout << "  " << KUNING_TERANG << TEBAL
+        << IKON_BINTANG
+        << " VISUALISASI KESEHATAN KEUANGAN"
+        << RESET << "\n";
 
-cetakPembagiTipis();
+    cetakPembagiTipis();
 
-// Ambil data normal
-double persentaseKesehatan = hitungPersentaseKesehatan();
-double persentaseBudget    = hitungPersentaseBudget();
-double persentaseGoal      = hitungRataRataProgressTarget();
+    // Ambil data normal
+    double persentaseKesehatan = hitungPersentaseKesehatan();
+    double persentaseBudget    = hitungPersentaseBudget();
+    double persentaseGoal      = hitungRataRataProgressTarget();
 
-// Cek apakah benar-benar belum ada data
-bool belumAdaData =
-    totalPendapatan == 0 &&
-    totalPengeluaran == 0 &&
-    daftarTarget.kosong();
+    // Cek apakah benar-benar belum ada data
+    bool belumAdaData =
+        totalPendapatan == 0 &&
+        totalPengeluaran == 0 &&
+        ukuranTarget == 0;
 
-if (belumAdaData) {
-    persentaseKesehatan = 0;
-    persentaseBudget = 0;
-    persentaseGoal = 0;
-}
-
-cout << "  " << TEBAL
-     << left << setw(20)
-     << "Financial Health"
-     << RESET;
-
-cetakProgressBarOtomatis(persentaseKesehatan, 10);
-cout << "\n";
-
-cout << "  "
-     << TEBAL
-     << left
-     << setw(20)
-     << "Budget Status"
-     << RESET;
-
-cetakProgressBarOtomatis(persentaseBudget, 10);
-cout << "\n";
-
-cout << "  "
-     << TEBAL
-     << left
-     << setw(20)
-     << "Goal Progress"
-     << RESET;
-
-cetakProgressBarOtomatis(persentaseGoal, 10);
-cout << "\n";
-
-cetakSpasi();
-
-cout << "  Skor Finansial : ";
-
-if (belumAdaData) {
-
-    cetakBadge(" BELUM ADA DATA ", BG_BIRU);
-    cout << " Tambahkan transaksi untuk mulai analisis.";
-
-}
-else {
-
-    int skorTotal = 0;
-    int jumlahkategori = 0; 
-
-    jumlahkategori++;
-    if (persentaseKesehatan >= 50)
-        skorTotal++;
-    
-    jumlahkategori++;
-    if (persentaseBudget >= 66)
-        skorTotal++;
-
-    if (!daftarTarget.kosong()) {
-        jumlahkategori++;
-        if (persentaseGoal >= 30)
-            skorTotal++;
+    if (belumAdaData) {
+        persentaseKesehatan = 0;
+        persentaseBudget = 0;
+        persentaseGoal = 0;
     }
 
-    double skorAkhir = (double)skorTotal / jumlahkategori;
+    cout << "  " << TEBAL << left << setw(20) << "Financial Health" << RESET;
+    cetakProgressBarOtomatis(persentaseKesehatan, 10);
+    cout << "\n";
 
-    if (skorAkhir == 1.0) {
+    cout << "  " << TEBAL << left << setw(20) << "Budget Status" << RESET;
+    cetakProgressBarOtomatis(persentaseBudget, 10);
+    cout << "\n";
 
-        cetakBadge(" SANGAT SEHAT ", BG_HIJAU);
-        cout << " Keuangan Anda dalam kondisi prima!";
+    cout << "  " << TEBAL << left << setw(20) << "Goal Progress" << RESET;
+    cetakProgressBarOtomatis(persentaseGoal, 10);
+    cout << "\n";
 
-    }
-    else if (skorAkhir == 0.67) {
+    cetakSpasi();
 
-        cetakBadge(" CUKUP SEHAT ", BG_KUNING, "\033[30m");
-        cout << " Ada ruang untuk ditingkatkan.";
+    cout << "  Skor Finansial : ";
 
-    }
-    else if (skorAkhir == 0.34) {
-
-        cetakBadge(" PERLU PERHATIAN ", BG_MERAH);
-        cout << " Evaluasi pengeluaran Anda.";
-
+    if (belumAdaData) {
+        cetakBadge(" BELUM ADA DATA ", BG_BIRU);
+        cout << " Tambahkan transaksi untuk mulai analisis.";
     }
     else {
+        int skorTotal = 0;
+        int jumlahkategori = 0; 
 
-        cetakBadge(" KRITIS ", BG_MERAH);
-        cout << " Segera ambil tindakan!";
+        jumlahkategori++;
+        if (persentaseKesehatan >= 50)
+            skorTotal++;
+        
+        jumlahkategori++;
+        if (persentaseBudget >= 66)
+            skorTotal++;
+
+        if (!ukuranTarget == 0) {
+            jumlahkategori++;
+            if (persentaseGoal >= 30)
+                skorTotal++;
+        }
+
+        double skorAkhir = (double)skorTotal / jumlahkategori;
+
+        if (skorAkhir == 1.0) {
+            cetakBadge(" SANGAT SEHAT ", BG_HIJAU);
+            cout << " Keuangan Anda dalam kondisi prima!";
+        }
+        else if (skorAkhir == 0.67) {
+            cetakBadge(" CUKUP SEHAT ", BG_KUNING, "\033[30m");
+            cout << " Ada ruang untuk ditingkatkan.";
+        }
+        else if (skorAkhir == 0.34) {
+            cetakBadge(" PERLU PERHATIAN ", BG_MERAH);
+            cout << " Evaluasi pengeluaran Anda.";
+        }
+        else {
+            cetakBadge(" KRITIS ", BG_MERAH);
+            cout << " Segera ambil tindakan!";
+        }
     }
-}
-
-cout << "\n";
-
-cetakFooter(
-    "Dashboard diperbarui secara real-time dari data sesi."
-);
-
-jedaLayar();
+    cout << "\n";
+    cetakFooter(
+        "Dashboard diperbarui secara real-time dari data sesi."
+    );
+    jedaLayar();
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -915,7 +945,7 @@ void tampilkanDaftarDompet(bool jedaSetelah = true) {
     cetakStatusBar(namaAkunAktif);
     cetakHeader("  WALLET MANAGEMENT  ·  Daftar Dompet  ");
 
-    if (daftarDompet.kosong()) {
+    if (ukuranDompet == 0) {
         cetakSpasi();
         cout << "  " << KUNING << IKON_PANAH << " Belum ada dompet. Tambahkan dompet baru!" << RESET << "\n";
         if (jedaSetelah) jedaLayar();
@@ -934,7 +964,7 @@ void tampilkanDaftarDompet(bool jedaSetelah = true) {
     cetakPembagiTipis();
 
     int nomor = 1;
-    for (const auto& dompet : daftarDompet) {
+    for (int _id = 0; _id < ukuranDompet; _id++) { Dompet& dompet = arrDompet[_id];
         string warnaJenis;
         if (dompet.jenisDompet == "Cash")           warnaJenis = HIJAU_TERANG;
         else if (dompet.jenisDompet == "E-Wallet")  warnaJenis = KUNING_TERANG;
@@ -953,7 +983,7 @@ void tampilkanDaftarDompet(bool jedaSetelah = true) {
     cetakPembagiTipis();
     cout << "  " << TEBAL << "Total Aset: " << HIJAU_TERANG
          << formatRupiah(hitungTotalAset()) << RESET
-         << "  (" << daftarDompet.banyak() << " dompet aktif)\n";
+         << "  (" << ukuranDompet << " dompet aktif)\n";
 
     if (jedaSetelah) {
         cout << "\n" << CYAN << "  " << IKON_PANAH << " Tekan Enter untuk kembali ke sub-menu..." << RESET;
@@ -1032,7 +1062,7 @@ void tambahDompet() {
         dompetBaru.waktuDibuat        = dapatkanWaktuSekarang();
 
         if (saldoAwalDompet > 0) totalPendapatan += saldoAwalDompet;
-        daftarDompet.tambah(dompetBaru);
+        tambahDompetArr(dompetBaru);
 
         tambahEntriLogAudit("Tambah Dompet",
             "Dompet '" + namaDompetBaru + "' (" + jenisDompetBaru + "/" + penyediaDompetBaru + ")"
@@ -1052,7 +1082,7 @@ void editDompet() {
         cetakStatusBar(namaAkunAktif);
         cetakHeader("  WALLET MANAGEMENT  ·  Edit Dompet  ");
 
-        if (daftarDompet.kosong()) {
+        if (ukuranDompet == 0) {
             cout << MERAH << "\n  Belum ada dompet.\n" << RESET;
             jedaLayar(); return;
         }
@@ -1060,13 +1090,13 @@ void editDompet() {
         tampilkanDaftarDompet(false);
         int indexDompet = bacaInteger("\n  Nomor dompet yang ingin diedit: ") - 1;
         if (indexDompet == -1000) return;
-        if (indexDompet < 0 || indexDompet >= (int)daftarDompet.banyak()) {
+        if (indexDompet < 0 || indexDompet >= (int)ukuranDompet) {
             cout << MERAH << "  Nomor tidak valid.\n" << RESET;
             jedaLayar();
             continue;
         }
 
-        Dompet& dompetDipilih = daftarDompet[indexDompet];
+        Dompet& dompetDipilih = arrDompet[indexDompet];
         string namaBaruDompet, penyediaBaruDompet;
 
         cout << "\n  Nama baru [" << KUNING << dompetDipilih.namaDompet << RESET << "]: ";
@@ -1092,7 +1122,7 @@ void hapusDompet() {
         cetakStatusBar(namaAkunAktif);
         cetakHeader("  WALLET MANAGEMENT  ·  Hapus Dompet  ");
 
-        if (daftarDompet.kosong()) {
+        if (ukuranDompet == 0) {
             cout << MERAH << "\n  Belum ada dompet.\n" << RESET;
             jedaLayar(); return;
         }
@@ -1100,13 +1130,13 @@ void hapusDompet() {
         tampilkanDaftarDompet(false);
         int indexDompet = bacaInteger("\n  Nomor dompet yang ingin dihapus: ") - 1;
         if (indexDompet == -1000) return;
-        if (indexDompet < 0 || indexDompet >= (int)daftarDompet.banyak()) {
+        if (indexDompet < 0 || indexDompet >= (int)ukuranDompet) {
             cout << MERAH << "  Nomor tidak valid.\n" << RESET;
             jedaLayar();
             continue;
         }
 
-        cout << MERAH << "\n  Yakin hapus dompet '" << daftarDompet[indexDompet].namaDompet << "'? (ya/tidak): " << RESET;
+        cout << MERAH << "\n  Yakin hapus dompet '" << arrDompet[indexDompet].namaDompet << "'? (ya/tidak): " << RESET;
         string konfirmasi;
         getline(cin, konfirmasi);
         if (konfirmasi.empty()) {
@@ -1116,8 +1146,8 @@ void hapusDompet() {
         }
 
         if (konfirmasi == "ya" || konfirmasi == "YA") {
-            tambahEntriLogAudit("Hapus Dompet", "Dompet '" + daftarDompet[indexDompet].namaDompet + "' dihapus");
-            daftarDompet.hapus(indexDompet);
+            tambahEntriLogAudit("Hapus Dompet", "Dompet '" + arrDompet[indexDompet].namaDompet + "' dihapus");
+            hapusDompetArr(indexDompet);
             cout << HIJAU_TERANG << "\n  " << IKON_CEK << " Dompet berhasil dihapus!\n" << RESET;
         } else if (konfirmasi == "tidak" || konfirmasi == "TIDAK") {
             cout << KUNING << "\n  Penghapusan dibatalkan.\n" << RESET;
@@ -1137,7 +1167,7 @@ void transferAntarDompet() {
         cetakStatusBar(namaAkunAktif);
         cetakHeader("  WALLET MANAGEMENT  ·  Transfer Antar Dompet  ");
 
-        if ((int)daftarDompet.banyak() < 2) {
+        if ((int)ukuranDompet < 2) {
             cout << MERAH << "\n  Minimal diperlukan 2 dompet untuk transfer.\n" << RESET;
             jedaLayar(); return;
         }
@@ -1145,18 +1175,18 @@ void transferAntarDompet() {
         tampilkanDaftarDompet(false);
         int indexAsal = bacaInteger("\n  Dari dompet nomor  : ") - 1;
         if (indexAsal == -1000) return;
-        if (indexAsal < 0 || indexAsal >= (int)daftarDompet.banyak()) {
+        if (indexAsal < 0 || indexAsal >= (int)ukuranDompet) {
             cout << MERAH << "\n  Nomor dompet asal tidak valid. Pilih antara 1 sampai "
-                 << daftarDompet.banyak() << ".\n" << RESET;
+                 << ukuranDompet << ".\n" << RESET;
             jedaLayar();
             continue;
         }
 
         int indexTujuan = bacaInteger("  Ke dompet nomor    : ") - 1;
         if (indexTujuan == -1000) return;
-        if (indexTujuan < 0 || indexTujuan >= (int)daftarDompet.banyak()) {
+        if (indexTujuan < 0 || indexTujuan >= (int)ukuranDompet) {
             cout << MERAH << "\n  Nomor dompet tujuan tidak valid. Pilih antara 1 sampai "
-                 << daftarDompet.banyak() << ".\n" << RESET;
+                 << ukuranDompet << ".\n" << RESET;
             jedaLayar();
             continue;
         }
@@ -1170,28 +1200,28 @@ void transferAntarDompet() {
 
         double jumlahTransfer = bacaDouble("  Jumlah transfer (Rp): ");
         if (jumlahTransfer == -999) return;
-        if (jumlahTransfer <= 0 || jumlahTransfer > daftarDompet[indexAsal].saldoDompet) {
+        if (jumlahTransfer <= 0 || jumlahTransfer > arrDompet[indexAsal].saldoDompet) {
             cout << MERAH << "\n  Jumlah tidak valid atau saldo tidak mencukupi.\n"
-                 << "  Saldo tersedia: " << formatRupiah(daftarDompet[indexAsal].saldoDompet) << RESET << "\n";
+                 << "  Saldo tersedia: " << formatRupiah(arrDompet[indexAsal].saldoDompet) << RESET << "\n";
             jedaLayar();
             continue;
         }
 
-        daftarDompet[indexAsal].saldoDompet   -= jumlahTransfer;
-        daftarDompet[indexTujuan].saldoDompet += jumlahTransfer;
+        arrDompet[indexAsal].saldoDompet   -= jumlahTransfer;
+        arrDompet[indexTujuan].saldoDompet += jumlahTransfer;
 
         string detailTransfer = "Transfer " + formatRupiah(jumlahTransfer)
-            + " dari '" + daftarDompet[indexAsal].namaDompet
-            + "' ke '" + daftarDompet[indexTujuan].namaDompet + "'";
+            + " dari '" + arrDompet[indexAsal].namaDompet
+            + "' ke '" + arrDompet[indexTujuan].namaDompet + "'";
         tambahEntriLogAudit("Transfer Dompet", detailTransfer);
 
         cetakLoading("\n  Memproses transfer");
         cout << "\n  " << HIJAU_TERANG << TEBAL << IKON_CEK << " Transfer berhasil!" << RESET << "\n";
         cetakPembagiTipis();
-        cout << "  " << MERAH   << daftarDompet[indexAsal].namaDompet << RESET
-             << " => " << HIJAU << formatRupiah(daftarDompet[indexAsal].saldoDompet) << RESET << "\n";
-        cout << "  " << HIJAU   << daftarDompet[indexTujuan].namaDompet << RESET
-             << " => " << HIJAU << formatRupiah(daftarDompet[indexTujuan].saldoDompet) << RESET << "\n";
+        cout << "  " << MERAH   << arrDompet[indexAsal].namaDompet << RESET
+             << " => " << HIJAU << formatRupiah(arrDompet[indexAsal].saldoDompet) << RESET << "\n";
+        cout << "  " << HIJAU   << arrDompet[indexTujuan].namaDompet << RESET
+             << " => " << HIJAU << formatRupiah(arrDompet[indexTujuan].saldoDompet) << RESET << "\n";
         jedaLayar();
         return;
     }
@@ -1208,7 +1238,7 @@ void menuWalletManagement() {
         // Info ringkas aset
         cout << "  " << TEBAL << "Total Aset Saat Ini: "
              << HIJAU_TERANG << formatRupiah(hitungTotalAset()) << RESET
-             << "  (" << daftarDompet.banyak() << " dompet)\n";
+             << "  (" << ukuranDompet << " dompet)\n";
         cetakSpasi();
 
         cetakItemMenu("1", "Tambah Dompet Baru",    HIJAU_TERANG,  IKON_LINGKARAN);
@@ -1237,14 +1267,13 @@ void menuWalletManagement() {
     } while (pilihanMenu != 0);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
 // [J]  MODUL TRANSACTION MANAGEMENT
-// ═══════════════════════════════════════════════════════════════════════
 
 // Cari dompet berdasarkan ID
 Dompet* cariDompetBerdasarkanID(const string& idDompet) {
-    for (auto& dompet : daftarDompet)
-        if (dompet.identifikasiDompet == idDompet) return &dompet;
+    for (int _id = 0; _id < ukuranDompet; _id++) {
+        if (arrDompet[_id].identifikasiDompet == idDompet) return &arrDompet[_id];
+    }
     return nullptr;
 }
 
@@ -1254,7 +1283,7 @@ void tambahTransaksi(const string& jenisTransaksiBaru) {
         cetakStatusBar(namaAkunAktif);
         cetakHeader("  TRANSACTION MANAGEMENT  ·  Tambah " + jenisTransaksiBaru + "  ");
 
-        if (daftarDompet.kosong()) {
+        if (ukuranDompet == 0) {
             cout << MERAH << "\n  Belum ada dompet. Tambahkan dompet terlebih dahulu!\n" << RESET;
             jedaLayar(); return;
         }
@@ -1262,23 +1291,23 @@ void tambahTransaksi(const string& jenisTransaksiBaru) {
         cetakSpasi();
         cout << "  " << TEBAL << CYAN << "Daftar Dompet Tersedia:" << RESET << "\n";
         cetakPembagiTipis();
-        for (int i = 0; i < (int)daftarDompet.banyak(); i++) {
-            string warnaJenis = (daftarDompet[i].jenisDompet == "Cash") ? HIJAU
-                              : (daftarDompet[i].jenisDompet == "E-Wallet") ? KUNING : CYAN;
+        for (int i = 0; i < (int)ukuranDompet; i++) {
+            string warnaJenis = (arrDompet[i].jenisDompet == "Cash") ? HIJAU
+                              : (arrDompet[i].jenisDompet == "E-Wallet") ? KUNING : CYAN;
             cout << "  [" << KUNING_TERANG << TEBAL << (i + 1) << RESET << "]  "
-                 << left << setw(20) << potongTeks(daftarDompet[i].namaDompet, 19)
-                 << warnaJenis << setw(12) << daftarDompet[i].jenisDompet << RESET
-                 << HIJAU << formatRupiah(daftarDompet[i].saldoDompet) << RESET << "\n";
+                 << left << setw(20) << potongTeks(arrDompet[i].namaDompet, 19)
+                 << warnaJenis << setw(12) << arrDompet[i].jenisDompet << RESET
+                 << HIJAU << formatRupiah(arrDompet[i].saldoDompet) << RESET << "\n";
         }
 
         int indexDompetDipilih = bacaInteger("\n  Pilih nomor dompet: ") - 1;
         if (indexDompetDipilih == -1000) return;
-        if (indexDompetDipilih < 0 || indexDompetDipilih >= (int)daftarDompet.banyak()) {
+        if (indexDompetDipilih < 0 || indexDompetDipilih >= (int)ukuranDompet) {
             cout << MERAH << "  Dompet tidak valid.\n" << RESET;
             jedaLayar();
             continue;
         }
-        Dompet& dompetDipilih = daftarDompet[indexDompetDipilih];
+        Dompet& dompetDipilih = arrDompet[indexDompetDipilih];
 
         string deskripsiTransaksiBaru;
         cout << "\n  " << KUNING << "Deskripsi        : " << RESET;
@@ -1332,9 +1361,9 @@ void tambahTransaksi(const string& jenisTransaksiBaru) {
         transaksiObjek.namaDompetTransaksi = dompetDipilih.namaDompet;
         transaksiObjek.waktuTransaksi      = dapatkanWaktuSekarang();
 
-        string hashSebelumnya = daftarTransaksi.kosong()
+        string hashSebelumnya = ukuranTransaksi == 0
             ? "0000000000000000"
-            : daftarTransaksi.terakhir().hashSaatIni;
+            : arrTransaksi[ukuranTransaksi - 1].hashSaatIni;
         transaksiObjek.hashSebelumnya = hashSebelumnya;
         string dataUntukHash = transaksiObjek.idTransaksi
             + transaksiObjek.jenisTransaksi
@@ -1354,7 +1383,7 @@ void tambahTransaksi(const string& jenisTransaksiBaru) {
             else if (kategoriTransaksiBaru == "Savings") pengeluaranTabungan  += jumlahTransaksiBaru;
         }
 
-        daftarTransaksi.tambah(transaksiObjek);
+        tambahTransaksiArr(transaksiObjek);
         tambahEntriLogAudit("Tambah Transaksi",
             transaksiObjek.idTransaksi + " | " + jenisTransaksiBaru
             + " | " + formatRupiah(jumlahTransaksiBaru) + " | " + deskripsiTransaksiBaru);
@@ -1385,7 +1414,7 @@ void tampilkanRiwayatTransaksi(bool jedaSetelah = true) {
     cetakStatusBar(namaAkunAktif);
     cetakHeader("  TRANSACTION MANAGEMENT  ·  Riwayat Transaksi  ");
 
-    if (daftarTransaksi.kosong()) {
+    if (ukuranTransaksi == 0) {
         cetakSpasi();
         cout << "  " << REDUP << MIRING << "Belum ada transaksi." << RESET << "\n";
         if (jedaSetelah) jedaLayar();
@@ -1403,7 +1432,7 @@ void tampilkanRiwayatTransaksi(bool jedaSetelah = true) {
          << "Waktu" << RESET << "\n";
     cetakPembagiTipis();
 
-    for (const auto& transaksi : daftarTransaksi) {
+    for (int _it = 0; _it < ukuranTransaksi; _it++) { Transaksi& transaksi = arrTransaksi[_it];
         string warnaJenis = (transaksi.jenisTransaksi == "Income") ? HIJAU_TERANG : MERAH_TERANG;
         cout << "  " << KUNING << left << setw(22) << potongTeks(transaksi.idTransaksi, 21)
              << warnaJenis << setw(10) << transaksi.jenisTransaksi << RESET
@@ -1414,7 +1443,7 @@ void tampilkanRiwayatTransaksi(bool jedaSetelah = true) {
     }
 
     cetakPembagiTipis();
-    cout << "  " << TEBAL << "Total: " << daftarTransaksi.banyak() << " transaksi"
+    cout << "  " << TEBAL << "Total: " << ukuranTransaksi << " transaksi"
          << "  |  " << HIJAU << "Pendapatan: " << formatRupiah(totalPendapatan) << RESET
          << "  " << MERAH << "Pengeluaran: " << formatRupiah(totalPengeluaran) << RESET << "\n";
     if (jedaSetelah) jedaLayar();
@@ -1438,7 +1467,7 @@ void cariTransaksi() {
 
         bool ditemukan = false;
         cetakPembagiTipis();
-        for (const auto& transaksi : daftarTransaksi) {
+        for (int _it = 0; _it < ukuranTransaksi; _it++) { Transaksi& transaksi = arrTransaksi[_it];
             if (transaksi.idTransaksi.find(kataKunciCari) != string::npos ||
                 transaksi.deskripsiTransaksi.find(kataKunciCari) != string::npos ||
                 transaksi.kategoriTransaksi.find(kataKunciCari) != string::npos ||
@@ -1471,7 +1500,7 @@ void hapusTransaksi() {
         cetakStatusBar(namaAkunAktif);
         cetakHeader("  TRANSACTION MANAGEMENT  ·  Hapus Transaksi  ");
 
-        if (daftarTransaksi.kosong()) {
+        if (ukuranTransaksi == 0) {
             cout << MERAH << "\n  Belum ada transaksi.\n" << RESET;
             jedaLayar(); return;
         }
@@ -1487,9 +1516,9 @@ void hapusTransaksi() {
             return;
         }
 
-        for (int i = 0; i < (int)daftarTransaksi.banyak(); i++) {
-            if (daftarTransaksi[i].idTransaksi == txidYangDihapus) {
-                Transaksi& t = daftarTransaksi[i];
+        for (int i = 0; i < (int)ukuranTransaksi; i++) {
+            if (arrTransaksi[i].idTransaksi == txidYangDihapus) {
+                Transaksi& t = arrTransaksi[i];
 
                 Dompet* dompetTransaksi = cariDompetBerdasarkanID(t.idDompetTransaksi);
                 if (dompetTransaksi) {
@@ -1508,7 +1537,7 @@ void hapusTransaksi() {
                 }
 
                 tambahEntriLogAudit("Hapus Transaksi", txidYangDihapus + " dihapus & saldo di-rollback");
-                daftarTransaksi.hapus(i);
+                hapusTransaksiArr(i);
                 cout << HIJAU_TERANG << "\n  " << IKON_CEK << " Transaksi berhasil dihapus dan saldo dirollback!\n" << RESET;
                 jedaLayar(); return;
             }
@@ -1561,9 +1590,7 @@ void menuTransactionManagement() {
     } while (pilihanMenu != 0);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
 // [K]  MODUL BUDGET MANAGER
-// ═══════════════════════════════════════════════════════════════════════
 
 void tampilkanStatusBudget() {
     bersihLayar();
@@ -1652,7 +1679,7 @@ void tampilkanMonitoringBudget() {
          << "Waktu" << RESET << "\n";
     cetakPembagiTipis();
 
-    for (const auto& transaksi : daftarTransaksi) {
+    for (int _it = 0; _it < ukuranTransaksi; _it++) { Transaksi& transaksi = arrTransaksi[_it];
         if (transaksi.jenisTransaksi == "Expense") {
             adaTransaksiPengeluaran = true;
             string warnaKat = (transaksi.kategoriTransaksi == "Needs") ? HIJAU
@@ -1770,9 +1797,7 @@ void menuBudgetManager() {
     } while (pilihanMenu != 0);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
 // [L]  MODUL GOAL TRACKER
-// ═══════════════════════════════════════════════════════════════════════
 
 void tampilkanDaftarTarget(bool jedaSetelah = true) {
     bersihLayar();
@@ -1780,7 +1805,7 @@ void tampilkanDaftarTarget(bool jedaSetelah = true) {
     cetakHeader("  GOAL TRACKER  ·  Daftar Target Keuangan  ");
     cetakSpasi();
 
-    if (daftarTarget.kosong()) {
+    if (ukuranTarget == 0) {
         cout << "  " << KUNING << IKON_PANAH << " Belum ada target. Tambahkan wishlist keuangan Anda!\n" << RESET;
         cout << "  " << REDUP << MIRING << "Contoh: Laptop, Dana Darurat, Liburan, Kendaraan" << RESET << "\n";
         if (jedaSetelah) jedaLayar();
@@ -1788,7 +1813,7 @@ void tampilkanDaftarTarget(bool jedaSetelah = true) {
     }
 
     int nomor = 1;
-    for (const auto& target : daftarTarget) {
+    for (int _ig = 0; _ig < ukuranTarget; _ig++) { TargetKeuangan& target = arrTarget[_ig];
         double persentaseTarget = (target.nominalTarget > 0)
             ? min(100.0, target.nominalTerkumpul / target.nominalTarget * 100.0) : 0.0;
         double sisaTarget = target.nominalTarget - target.nominalTerkumpul;
@@ -1847,7 +1872,7 @@ void tambahTarget() {
         targetBaru.nominalTarget      = nominalTargetBaru;
         targetBaru.nominalTerkumpul   = 0.0;
         targetBaru.waktuDibuat        = dapatkanWaktuSekarang();
-        daftarTarget.tambah(targetBaru);
+        tambahTargetArr(targetBaru);
 
         tambahEntriLogAudit("Tambah Target", "Goal '" + namaTargetBaru + "' target " + formatRupiah(nominalTargetBaru));
 
@@ -1865,7 +1890,7 @@ void perbaruiProgressTarget() {
         cetakStatusBar(namaAkunAktif);
         cetakHeader("  GOAL TRACKER  ·  Update Progress Target  ");
 
-        if (daftarTarget.kosong()) {
+        if (ukuranTarget == 0) {
             cout << MERAH << "\n  Belum ada target.\n" << RESET;
             jedaLayar(); return;
         }
@@ -1873,31 +1898,31 @@ void perbaruiProgressTarget() {
         tampilkanDaftarTarget(false);
         int indexTarget = bacaInteger("\n  Nomor target yang ingin diperbarui: ") - 1;
         if (indexTarget == -1000) return;
-        if (indexTarget < 0 || indexTarget >= (int)daftarTarget.banyak()) {
+        if (indexTarget < 0 || indexTarget >= (int)ukuranTarget) {
             cout << MERAH << "  Nomor tidak valid.\n" << RESET;
             jedaLayar(); return;
         }
 
-        TargetKeuangan& targetDipilih = daftarTarget[indexTarget];
-        if (daftarDompet.kosong()) {
+        TargetKeuangan& targetDipilih = arrTarget[indexTarget];
+        if (ukuranDompet == 0) {
             cout << MERAH << "\n  Tidak ada dompet tersedia.\n" << RESET;
             jedaLayar();
             return;
         }
         cout << "\n  Pilih sumber dana:\n\n";
-        for (int i = 0; i < (int)daftarDompet.banyak(); i++) {
-            cout << "  ["  << i + 1 << "] " << daftarDompet[i].namaDompet << " (" << formatRupiah(daftarDompet[i].saldoDompet) << ")\n";
+        for (int i = 0; i < (int)ukuranDompet; i++) {
+            cout << "  ["  << i + 1 << "] " << arrDompet[i].namaDompet << " (" << formatRupiah(arrDompet[i].saldoDompet) << ")\n";
         }
 
         int indexDompet = bacaInteger("\n  Ambil dana dari dompet: ") - 1;
         if (indexDompet == -1000) return;
-        if (indexDompet < 0 || indexDompet >= (int)daftarDompet.banyak()) {
+        if (indexDompet < 0 || indexDompet >= (int)ukuranDompet) {
             cout << MERAH << "  Dompet tidak valid.\n" << RESET;
             jedaLayar();
             return;
         }
 
-        Dompet& dompet = daftarDompet[indexDompet];
+        Dompet& dompet = arrDompet[indexDompet];
         double tambahanDana = bacaDouble("  Tambah dana (Rp): ");
         if (tambahanDana == -999) return;
         if (tambahanDana <= 0) {
@@ -1935,7 +1960,7 @@ void perbaruiProgressTarget() {
         tx.idDompetTransaksi = dompet.identifikasiDompet;
         tx.deskripsiTransaksi = "Goal: " + targetDipilih.namaTarget;
         tx.waktuTransaksi = dapatkanWaktuSekarang();
-        daftarTransaksi.tambah(tx); 
+        tambahTransaksiArr(tx); 
 
         tambahEntriLogAudit("Update Target", "Goal '" + targetDipilih.namaTarget + "' +Rp" + to_string((long long)tambahanDana));
         cout << "\n  " << HIJAU_TERANG << TEBAL << IKON_CEK << " Progress berhasil diperbarui!\n\n" << RESET;
@@ -1963,7 +1988,7 @@ void hapusTarget() {
         cetakStatusBar(namaAkunAktif);
         cetakHeader("  GOAL TRACKER  ·  Hapus Target  ");
 
-        if (daftarTarget.kosong()) {
+        if (ukuranTarget == 0) {
             cout << MERAH << "\n  Belum ada target.\n" << RESET;
             jedaLayar(); return;
         }
@@ -1971,12 +1996,12 @@ void hapusTarget() {
         tampilkanDaftarTarget(false);
         int indexTarget = bacaInteger("\n  Nomor target yang ingin dihapus: ") - 1;
         if (indexTarget == -1000) return;
-        if (indexTarget < 0 || indexTarget >= (int)daftarTarget.banyak()) {
+        if (indexTarget < 0 || indexTarget >= (int)ukuranTarget) {
             cout << MERAH << "  Nomor tidak valid.\n" << RESET;
             jedaLayar(); return;
         }
 
-        cout << MERAH << "\n  Yakin hapus target '" << daftarTarget[indexTarget].namaTarget << "'? (ya/tidak): " << RESET;
+        cout << MERAH << "\n  Yakin hapus target '" << arrTarget[indexTarget].namaTarget << "'? (ya/tidak): " << RESET;
         string konfirmasiHapus;
         getline(cin, konfirmasiHapus);
         if (konfirmasiHapus.empty()) {
@@ -1986,7 +2011,7 @@ void hapusTarget() {
         }
 
         if (konfirmasiHapus == "ya" || konfirmasiHapus == "YA") {
-            TargetKeuangan& target = daftarTarget[indexTarget];
+            TargetKeuangan& target = arrTarget[indexTarget];
             double danaTarget = target.nominalTerkumpul;
             if (danaTarget > 0) {
                 string pilihan;
@@ -2003,11 +2028,11 @@ void hapusTarget() {
                 }
                 if (pilihan == "ya" || pilihan == "YA") {
                     cout << "\n  Pilih dompet:\n";
-                    for (int i = 0; i < (int)daftarDompet.banyak(); i++) {
-                    cout << "  ["  << i + 1 << "] " << daftarDompet[i].namaDompet << "\n";}
+                    for (int i = 0; i < (int)ukuranDompet; i++) {
+                    cout << "  ["  << i + 1 << "] " << arrDompet[i].namaDompet << "\n";}
                     int indexDompet = bacaInteger("\n  Nomor dompet: ") - 1;
-                    if (indexDompet >= 0 && indexDompet < (int)daftarDompet.banyak()) {
-                        daftarDompet[indexDompet].saldoDompet += danaTarget;
+                    if (indexDompet >= 0 && indexDompet < (int)ukuranDompet) {
+                        arrDompet[indexDompet].saldoDompet += danaTarget;
                         cout << HIJAU_TERANG << "\n  Dana berhasil dikembalikan.\n" << RESET;
                     } else {
                         cout << MERAH << "\n  Nomor dompet tidak valid. Dana tidak dikembalikan.\n" << RESET;
@@ -2015,7 +2040,7 @@ void hapusTarget() {
                 }
             }
             tambahEntriLogAudit("Hapus Target", "Goal '" + target.namaTarget + "' dihapus");
-            daftarTarget.hapus(indexTarget);
+            hapusTargetArr(indexTarget);
             cout << HIJAU_TERANG << "\n  " << IKON_CEK << " Target berhasil dihapus!\n" << RESET;
         }
         else if (konfirmasiHapus == "tidak" || konfirmasiHapus == "TIDAK") {
@@ -2033,18 +2058,19 @@ void hapusTarget() {
 void menuGoalTracker() {
     int pilihanMenu;
 
-    auto cetakHalamanGoalTracker = []() {
+    do {
         bersihLayar();
         cetakStatusBar(namaAkunAktif);
         cetakHeader("  GOAL TRACKER  ");
         cetakSpasi();
 
         // Preview ringkas goal
-        if (!daftarTarget.kosong()) {
+        if (ukuranTarget > 0) {
             int tercapai = 0;
-            for (const auto& t : daftarTarget)
-                if (t.nominalTerkumpul >= t.nominalTarget) tercapai++;
-            cout << "  " << TEBAL << daftarTarget.banyak() << " target aktif"
+            for (int _ig = 0; _ig < ukuranTarget; _ig++) {
+                if (arrTarget[_ig].nominalTerkumpul >= arrTarget[_ig].nominalTarget) tercapai++;
+            }
+            cout << "  " << TEBAL << ukuranTarget << " target aktif"
                  << "  |  " << HIJAU << tercapai << " tercapai" << RESET << "\n";
             cout << "  Progress rata-rata: ";
             cetakProgressBarOtomatis(hitungRataRataProgressTarget(), 10);
@@ -2059,10 +2085,6 @@ void menuGoalTracker() {
         cetakPembagiTipis();
         cetakItemMenu("0", "Kembali ke Menu Utama",     MERAH,          IKON_PANAH);
         cetakPembagiTipis();
-    };
-
-    do {
-        cetakHalamanGoalTracker();
 
         pilihanMenu = bacaInteger("  Pilihan: ");
         if (pilihanMenu == -999) continue;
@@ -2080,12 +2102,11 @@ void menuGoalTracker() {
     } while (pilihanMenu != 0);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
 // [M]  MODUL AUDIT LOG (Menu)
-// ═══════════════════════════════════════════════════════════════════════
 
-void cetakTabelLogAudit(const DaftarDinamis<EntriLogAudit>& daftarEntri) {
-    if (daftarEntri.kosong()) {
+// Cetak tabel log audit dari raw pointer array
+void cetakTabelLogAudit(EntriLogAudit* entri, int jumlah) {
+    if (jumlah == 0) {
         cout << "\n  " << REDUP << MIRING << "Belum ada aktivitas tercatat.\n" << RESET;
         return;
     }
@@ -2097,26 +2118,26 @@ void cetakTabelLogAudit(const DaftarDinamis<EntriLogAudit>& daftarEntri) {
          << "Detail" << RESET << "\n";
     string garis(76, '-');
     cout << "  " << CYAN << garis << RESET << "\n";
-    for (const auto& entri : daftarEntri) {
+    for (int i = 0; i < jumlah; i++) {
         string warnaAktivitas;
-        if (entri.jenisAktivitas == "Login" || entri.jenisAktivitas == "Register")
+        if (entri[i].jenisAktivitas == "Login" || entri[i].jenisAktivitas == "Register")
             warnaAktivitas = HIJAU;
-        else if (entri.jenisAktivitas == "Logout" || entri.jenisAktivitas == "Block")
+        else if (entri[i].jenisAktivitas == "Logout" || entri[i].jenisAktivitas == "Block")
             warnaAktivitas = MERAH;
-        else if (entri.jenisAktivitas.find("Hapus") != string::npos)
+        else if (entri[i].jenisAktivitas.find("Hapus") != string::npos)
             warnaAktivitas = MERAH_TERANG;
-        else if (entri.jenisAktivitas.find("Tambah") != string::npos)
+        else if (entri[i].jenisAktivitas.find("Tambah") != string::npos)
             warnaAktivitas = HIJAU_TERANG;
         else
             warnaAktivitas = KUNING;
 
         cout << "  " << left
-             << REDUP << setw(20) << potongTeks(entri.waktuAktivitas, 19) << RESET
-             << CYAN  << setw(16) << potongTeks(entri.namaAkunPengguna, 15) << RESET
-             << warnaAktivitas << setw(24) << potongTeks(entri.jenisAktivitas, 23) << RESET
-             << potongTeks(entri.detailAktivitas, 30) << "\n";
+             << REDUP << setw(20) << potongTeks(entri[i].waktuAktivitas, 19) << RESET
+             << CYAN  << setw(16) << potongTeks(entri[i].namaAkunPengguna, 15) << RESET
+             << warnaAktivitas << setw(24) << potongTeks(entri[i].jenisAktivitas, 23) << RESET
+             << potongTeks(entri[i].detailAktivitas, 30) << "\n";
     }
-    cout << "  " << REDUP << "Total: " << daftarEntri.banyak() << " entri" << RESET << "\n";
+    cout << "  " << REDUP << "Total: " << jumlah << " entri" << RESET << "\n";
 }
 
 void menuAuditLog() {
@@ -2128,7 +2149,7 @@ void menuAuditLog() {
         cetakHeader("  AUDIT LOG  ·  Riwayat Aktivitas  ");
         cetakSpasi();
 
-        cout << "  " << TEBAL << "Total entri log: " << KUNING_TERANG << daftarLogAudit.banyak() << RESET << "\n";
+        cout << "  " << TEBAL << "Total entri log: " << KUNING_TERANG << ukuranLogAudit << RESET << "\n";
         cetakSpasi();
 
         cetakItemMenu("1", "Lihat Semua Aktivitas",       CYAN_TERANG,    IKON_LINGKARAN);
@@ -2150,7 +2171,7 @@ void menuAuditLog() {
             bersihLayar();
             cetakStatusBar(namaAkunAktif);
             cetakHeader("  AUDIT LOG  ·  Semua Aktivitas  ");
-            cetakTabelLogAudit(daftarLogAudit);
+            cetakTabelLogAudit(arrLogAudit, ukuranLogAudit);
             jedaLayar();
         }
         else if (pilihanMenu == 2) {
@@ -2166,40 +2187,49 @@ void menuAuditLog() {
                 jedaLayar();
                 continue;
             }
-            DaftarDinamis<EntriLogAudit> hasilFilter;
-            for (const auto& entri : daftarLogAudit) {
-                if (entri.jenisAktivitas.find(kataKunciLog) != string::npos ||
-                    entri.detailAktivitas.find(kataKunciLog) != string::npos ||
-                    entri.namaAkunPengguna.find(kataKunciLog) != string::npos)
-                    hasilFilter.tambah(entri);
+            // Buat array filter sementara di heap
+            EntriLogAudit* hasilFilter = new EntriLogAudit[ukuranLogAudit];
+            int jumlahFilter = 0;
+            for (int i = 0; i < ukuranLogAudit; i++) {
+                if (arrLogAudit[i].jenisAktivitas.find(kataKunciLog) != string::npos ||
+                    arrLogAudit[i].detailAktivitas.find(kataKunciLog) != string::npos ||
+                    arrLogAudit[i].namaAkunPengguna.find(kataKunciLog) != string::npos)
+                    hasilFilter[jumlahFilter++] = arrLogAudit[i];
             }
-            cetakTabelLogAudit(hasilFilter);
-            if (hasilFilter.kosong())
+            cetakTabelLogAudit(hasilFilter, jumlahFilter);
+            if (jumlahFilter == 0)
                 cout << "\n  " << MERAH << IKON_SILANG << " Tidak ada hasil untuk: '" << kataKunciLog << "'\n" << RESET;
+            delete[] hasilFilter;
             jedaLayar();
         }
         else if (pilihanMenu == 3) {
             bersihLayar();
             cetakStatusBar(namaAkunAktif);
             cetakHeader("  AUDIT LOG  ·  Riwayat Login & Logout  ");
-            DaftarDinamis<EntriLogAudit> hasilFilter;
-            for (const auto& entri : daftarLogAudit)
-                if (entri.jenisAktivitas == "Login" || entri.jenisAktivitas == "Logout"
-                    || entri.jenisAktivitas == "Register" || entri.jenisAktivitas == "Block")
-                    hasilFilter.tambah(entri);
-            cetakTabelLogAudit(hasilFilter);
+            EntriLogAudit* hasilFilter = new EntriLogAudit[ukuranLogAudit];
+            int jumlahFilter = 0;
+            for (int i = 0; i < ukuranLogAudit; i++) {
+                if (arrLogAudit[i].jenisAktivitas == "Login" || arrLogAudit[i].jenisAktivitas == "Logout"
+                    || arrLogAudit[i].jenisAktivitas == "Register" || arrLogAudit[i].jenisAktivitas == "Block")
+                    hasilFilter[jumlahFilter++] = arrLogAudit[i];
+            }
+            cetakTabelLogAudit(hasilFilter, jumlahFilter);
+            delete[] hasilFilter;
             jedaLayar();
         }
         else if (pilihanMenu == 4) {
             bersihLayar();
             cetakStatusBar(namaAkunAktif);
             cetakHeader("  AUDIT LOG  ·  Riwayat Perubahan Data  ");
-            DaftarDinamis<EntriLogAudit> hasilFilter;
-            for (const auto& entri : daftarLogAudit)
-                if (entri.jenisAktivitas != "Login" && entri.jenisAktivitas != "Logout"
-                    && entri.jenisAktivitas != "Register" && entri.jenisAktivitas != "Block")
-                    hasilFilter.tambah(entri);
-            cetakTabelLogAudit(hasilFilter);
+            EntriLogAudit* hasilFilter = new EntriLogAudit[ukuranLogAudit];
+            int jumlahFilter = 0;
+            for (int i = 0; i < ukuranLogAudit; i++) {
+                if (arrLogAudit[i].jenisAktivitas != "Login" && arrLogAudit[i].jenisAktivitas != "Logout"
+                    && arrLogAudit[i].jenisAktivitas != "Register" && arrLogAudit[i].jenisAktivitas != "Block")
+                    hasilFilter[jumlahFilter++] = arrLogAudit[i];
+            }
+            cetakTabelLogAudit(hasilFilter, jumlahFilter);
+            delete[] hasilFilter;
             jedaLayar();
         }
         else if (pilihanMenu != 0) {
@@ -2209,15 +2239,13 @@ void menuAuditLog() {
     } while (pilihanMenu != 0);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
 // [N]  FINANCIAL MANAGEMENT SYSTEM  —  Menu Utama Setelah Login
-// ═══════════════════════════════════════════════════════════════════════
 
 void resetDataSesi() {
-    daftarDompet.bersihkan();
-    daftarTransaksi.bersihkan();
-    daftarTarget.bersihkan();
-    // daftarLogAudit TIDAK direset — audit bersifat persisten lintas sesi
+    bersihkanDompetArr();
+    bersihkanTransaksiArr();
+    bersihkanTargetArr();
+    // arrLogAudit TIDAK direset — audit bersifat persisten lintas sesi
     totalPendapatan      = 0.0;
     totalPengeluaran     = 0.0;
     pengeluaranKebutuhan = 0.0;
@@ -2247,8 +2275,8 @@ bool menuFinancialManagementSystem() {
         cout << "   " << REDUP << "Saldo Bersih: " << RESET
              << (hitungSaldoBersih() >= 0 ? HIJAU_TERANG : MERAH_TERANG) << TEBAL
              << formatRupiah(hitungSaldoBersih()) << RESET;
-        cout << "   " << REDUP << "Dompet: " << RESET << KUNING << daftarDompet.banyak() << RESET
-             << "   " << REDUP << "Transaksi: " << RESET << KUNING << daftarTransaksi.banyak() << RESET << "\n";
+        cout << "   " << REDUP << "Dompet: " << RESET << KUNING << ukuranDompet << RESET
+             << "   " << REDUP << "Transaksi: " << RESET << KUNING << ukuranTransaksi << RESET << "\n";
         cetakSpasi();
 
         cetakPembagiTipis();
@@ -2277,7 +2305,7 @@ bool menuFinancialManagementSystem() {
             case 6: menuAuditLog();                     break;
             case 0: {
                 tambahEntriLogAudit("Logout", "User " + namaAkunAktif + " logout");
-                cout << "\n  " << KUNING_TERANG << "  Sampai jumpa, " << TEBAL
+                cout << "\n  " << KUNING_TERANG << " Sampai jumpa, " << TEBAL
                     << namaAkunAktif << RESET << KUNING_TERANG << "! Sesi diakhiri.\n" << RESET;
 
                 cout << "\n  Reset data sesi ini? (ya/tidak): ";
@@ -2292,7 +2320,7 @@ bool menuFinancialManagementSystem() {
 
                 if (pilihanReset != "ya" && pilihanReset != "YA" &&
                     pilihanReset != "tidak" && pilihanReset != "TIDAK") {
-                    cout << MERAH << "\n  Jawaban tidak valid, ketik 'ya' atau 'tidak'.\n" << RESET;
+                    cout << MERAH << "\n Jawaban tidak valid, ketik 'ya' atau 'tidak'.\n" << RESET;
                     jedaLayar();
                     break; // batal logout → balik ke menu utama
                 }
@@ -2311,9 +2339,9 @@ bool menuFinancialManagementSystem() {
     } while (true);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+
 // [O]  AUTHENTICATION SYSTEM
-// ═══════════════════════════════════════════════════════════════════════
+
 bool prosesRegistrasi() {
     while (true) {
         bersihLayar();
@@ -2336,7 +2364,7 @@ bool prosesRegistrasi() {
             jedaLayar(); return false;
         }
         // Cek duplikasi
-        for (const auto& pengguna : daftarSemuaPengguna) {
+        for (int _ip = 0; _ip < ukuranPengguna; _ip++) { Pengguna& pengguna = arrPengguna[_ip];
             if (pengguna.namaAkun == namaAkunBaru) {
                 cout << MERAH << "\n  " << IKON_SILANG << " Username '" << namaAkunBaru << "' sudah terdaftar!\n" << RESET;
                 jedaLayar(); return false;
@@ -2373,14 +2401,14 @@ bool prosesRegistrasi() {
         penggunaBaru.namaAkun    = namaAkunBaru;
         penggunaBaru.kataKunci   = kataKunciBaru;
         penggunaBaru.waktuDaftar = dapatkanWaktuSekarang();
-        daftarSemuaPengguna.tambah(penggunaBaru);
+        tambahPengguna(penggunaBaru);
 
         EntriLogAudit entriRegistrasi;
         entriRegistrasi.waktuAktivitas   = dapatkanWaktuSekarang();
         entriRegistrasi.namaAkunPengguna = namaAkunBaru;
         entriRegistrasi.jenisAktivitas   = "Register";
         entriRegistrasi.detailAktivitas  = "Akun baru terdaftar pada " + dapatkanWaktuSekarang();
-        daftarLogAudit.tambah(entriRegistrasi);
+        tambahLogAuditArr(entriRegistrasi);
 
         cetakLoading("\n  Menyimpan akun");
         cout << "\n  " << BG_HIJAU << PUTIH_TERANG << TEBAL << " " << IKON_CEK << " Registrasi berhasil! Silakan Sign In. " << RESET << "\n";
@@ -2397,7 +2425,7 @@ int prosesLogin() {
         cetakHeader("  AUTHENTICATION  ·  Sign In — Masuk ke Akun  ");
         cetakSpasi();
 
-        if (daftarSemuaPengguna.kosong()) {
+        if (ukuranPengguna == 0) {
             cout << MERAH << "\n  " << IKON_SILANG << " Belum ada akun. Silakan Sign Up terlebih dahulu!\n" << RESET;
             jedaLayar(); return 0;
         }
@@ -2412,7 +2440,7 @@ int prosesLogin() {
         }
         // Cari pengguna
         Pengguna* penggunaDipilih = nullptr;
-        for (auto& pengguna : daftarSemuaPengguna) {
+        for (int _ip = 0; _ip < ukuranPengguna; _ip++) { Pengguna& pengguna = arrPengguna[_ip];
             if (pengguna.namaAkun == namaAkunLogin) { penggunaDipilih = &pengguna; break; }
         }
         if (!penggunaDipilih) {
@@ -2485,9 +2513,8 @@ int prosesLogin() {
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+
 // [P]  MAIN PROGRAM
-// ═══════════════════════════════════════════════════════════════════════
 
 int main() {
     // Aktifkan UTF-8 di Windows
@@ -2506,7 +2533,7 @@ int main() {
 
         // Info singkat
         cout << "  " << REDUP << "Pengguna terdaftar: " << RESET
-             << KUNING << daftarSemuaPengguna.banyak() << RESET
+             << KUNING << ukuranPengguna << RESET
              << "   " << REDUP << "Tanggal: " << RESET
              << CYAN << dapatkanTanggalSekarang() << RESET << "\n";
         cetakSpasi();
